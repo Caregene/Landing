@@ -1,0 +1,176 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { User, ChevronDown, Plus, Settings, LogOut, UserCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { getChildren, type Child } from "@/lib/milestone-data-layer"
+import { GlobalChildProfiles } from "@/components/global-child-profiles"
+
+interface GlobalHeaderProps {
+  selectedChildId?: string
+  onChildSelect?: (childId: string) => void
+  showChildSelector?: boolean
+}
+
+export function GlobalHeader({ selectedChildId, onChildSelect, showChildSelector = true }: GlobalHeaderProps) {
+  const [children, setChildren] = useState<Child[]>([])
+  const [selectedChild, setSelectedChild] = useState<Child | null>(null)
+  const [showChildModal, setShowChildModal] = useState(false)
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
+
+  useEffect(() => {
+    try {
+      const loadedChildren = getChildren() || []
+      setChildren(loadedChildren)
+
+      if (selectedChildId) {
+        const child = loadedChildren.find((c) => c.id === selectedChildId)
+        setSelectedChild(child || null)
+      } else if (loadedChildren.length > 0) {
+        setSelectedChild(loadedChildren[0])
+        onChildSelect?.(loadedChildren[0].id)
+      }
+    } catch (error) {
+      console.error("Error loading children:", error)
+      setChildren([])
+    }
+  }, [selectedChildId, onChildSelect])
+
+  const handleChildSelect = (child: Child) => {
+    setSelectedChild(child)
+    onChildSelect?.(child.id)
+  }
+
+  return (
+    <>
+      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4">
+        {/* Left side - space for hamburger menu */}
+        <div className="w-10 lg:w-14"></div>
+
+        {/* Right side - child selector and profile */}
+        <div className="flex items-center gap-3">
+          {/* Child Selector */}
+          {showChildSelector && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 bg-white/95 backdrop-blur border-gray-200 hover:bg-gray-50"
+                >
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                    {selectedChild ? (
+                      selectedChild.photo ? (
+                        <img
+                          src={selectedChild.photo || "/placeholder.svg"}
+                          alt={selectedChild.firstName}
+                          className="w-6 h-6 rounded-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-3 h-3 text-blue-600" />
+                      )
+                    ) : (
+                      <User className="w-3 h-3 text-gray-400" />
+                    )}
+                  </div>
+                  <span className="text-sm font-medium">
+                    {selectedChild ? selectedChild.firstName : "Select Child"}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {children.map((child) => (
+                  <DropdownMenuItem
+                    key={child.id}
+                    onClick={() => handleChildSelect(child)}
+                    className="flex items-center gap-3 p-3"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                      {child.photo ? (
+                        <img
+                          src={child.photo || "/placeholder.svg"}
+                          alt={child.firstName}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-4 h-4 text-blue-600" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium">{child.firstName}</div>
+                      <div className="text-xs text-gray-500">
+                        {Math.floor(
+                          (Date.now() - new Date(child.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000),
+                        )}{" "}
+                        years old
+                      </div>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setShowChildModal(true)} className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Manage Children
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          {/* User Profile Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-10 h-10 rounded-full bg-white/95 backdrop-blur border border-gray-200 hover:bg-gray-50 p-0"
+              >
+                <UserCircle className="w-6 h-6 text-gray-600" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="px-3 py-2 border-b">
+                <div className="font-medium text-sm">John Doe</div>
+                <div className="text-xs text-gray-500">john.doe@example.com</div>
+              </div>
+              <DropdownMenuItem className="flex items-center gap-2">
+                <UserCircle className="w-4 h-4" />
+                My Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="flex items-center gap-2 text-red-600">
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Child Management Modal */}
+      <Dialog open={showChildModal} onOpenChange={setShowChildModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <GlobalChildProfiles onClose={() => setShowChildModal(false)} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Settings Modal */}
+      {/* <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <GlobalSettings onClose={() => setShowSettingsModal(false)} />
+        </DialogContent>
+      </Dialog> */}
+    </>
+  )
+}
