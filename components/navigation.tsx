@@ -135,7 +135,7 @@ export function Navigation() {
 
   const parentApps = [
     { href: "/health-plan", icon: Stethoscope, label: "Health Journey" },
-    { href: "/care-community", icon: Users, label: "Community" },
+    { href: "/community", icon: Users, label: "Community" },
     { href: "/doc-hub", icon: FileText, label: "DocHub" },
     { href: "/condition-knowledge", icon: BookOpen, label: "Condition Knowledge" },
   ]
