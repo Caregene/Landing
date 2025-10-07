@@ -10,15 +10,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileText, Download, Copy, CheckCircle, AlertCircle, HelpCircle, Calendar, Info } from "lucide-react"
 import {
   getChild,
-  getChecklist,
+  
   getChecklistResponses,
   type Child,
-  type Checklist,
-  type ChecklistResponse,
-  type AgeKey,
+  type getChecklist,
+  type saveChecklistResponse,
+  type AGE_KEYS,
 } from "@/lib/milestone-data-layer"
 import { milestoneAnalytics } from "@/lib/milestone-analytics"
 import { ErrorToast } from "@/components/milestone/error-toast"
+import { AgeKey } from "@/types/milestone"
 
 interface SummaryExportProps {
   childId: string

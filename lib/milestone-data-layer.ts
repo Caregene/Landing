@@ -1,6 +1,6 @@
 import type {
   AgeKey,
-  Child,
+ Child,
   Checklist,
   ChecklistResponse,
   Tip,

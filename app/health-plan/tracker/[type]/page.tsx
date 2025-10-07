@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { TrackerFormModal } from "@/components/tracker-form-modal"
+import { symptomStorage } from "@/lib/log-track/symptomStorage"
+import { nutritionStorage } from "@/lib/log-track/nutritionStorage"
 
 export default function TrackerDetailsPage() {
   const params = useParams()
@@ -160,9 +162,29 @@ export default function TrackerDetailsPage() {
   }
 
   const handleTrackerSave = (entryData: any) => {
-    const storageKey = `caregene-${trackerType}-entries`
-    const existingEntries = JSON.parse(localStorage.getItem(storageKey) || "[]")
-    localStorage.setItem(storageKey, JSON.stringify([...existingEntries, entryData]))
+    // Ensure client-side execution
+    if (typeof window === "undefined") return
+
+    if (trackerType === "symptom") {
+      console.log("[tracker] Submitting symptom entry via symptomStorage.add")
+      try {
+        symptomStorage.add(entryData)
+      } catch (e) {
+        console.error("[tracker] Failed to submit symptom entry", e)
+      }
+    } else if (trackerType === "nutrition") {
+      console.log("[tracker] Submitting nutrition entry via nutritionStorage.add")
+      try {
+        nutritionStorage.add(entryData)
+      } catch (e) {
+        console.error("[tracker] Failed to submit nutrition entry", e)
+      }
+    } else {
+      const storageKey = `caregene-${trackerType}-entries`
+      const existingEntries = JSON.parse(localStorage.getItem(storageKey) || "[]")
+      localStorage.setItem(storageKey, JSON.stringify([...existingEntries, entryData]))
+      console.log(`[tracker] Saved ${trackerType} entry locally`, entryData)
+    }
 
     setShowTrackerForm(false)
     setSelectedTrackerOption(null)
@@ -225,7 +247,7 @@ export default function TrackerDetailsPage() {
 
     // Add to custom options
     const updatedCustom = [...customOptions[trackerType], newItem]
-    setCustomOptions((prev) => ({
+    setCustomOptions((prev: any) => ({
       ...prev,
       [trackerType]: updatedCustom,
     }))

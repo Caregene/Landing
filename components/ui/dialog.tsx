@@ -4,7 +4,10 @@ import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { XIcon } from 'lucide-react'
 
-import { cn } from '@/lib/utils'
+
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { cn } from '/lib/utils';
+import { title } from 'process'
 
 function Dialog({
   ...props
@@ -57,6 +60,9 @@ function DialogContent({
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
+      <DialogPrimitive.Title>
+          <VisuallyHidden>{title}</VisuallyHidden>
+        </DialogPrimitive.Title>
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
