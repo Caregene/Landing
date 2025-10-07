@@ -17,7 +17,7 @@ export default function HomePage() {
     { icon: Stethoscope, title: "Health Journey", href: "/health-plan" },
     { icon: FileText, title: "DocHub", href: "/doc-hub" },
     { icon: BookOpen, title: "Condition Knowledge", href: "/condition-knowledge" },
-    { icon: Users, title: "Community", href: "/care-community" },
+    { icon: Users, title: "Community", href: "/community" },
   ]
 
   const researchTools = [{ icon: FlaskConical, title: "Research", href: "/research-platform" }]

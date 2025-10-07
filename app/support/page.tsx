@@ -159,7 +159,7 @@ export default function SupportPage() {
                 </div>
               </div>
               <Button variant="outline" className="w-full text-sm bg-transparent" asChild>
-                <Link href="/care-community">Join Community</Link>
+                <Link href="/community">Join Community</Link>
               </Button>
             </CardContent>
           </Card>

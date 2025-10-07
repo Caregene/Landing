@@ -129,7 +129,7 @@ export function Navigation() {
     { href: "/health-plan", icon: Stethoscope, label: "Health Journey" },
     { href: "/doc-hub", icon: FileText, label: "DocHub" },
     { href: "/condition-knowledge", icon: BookOpen, label: "Condition Knowledge" },
-    { href: "/care-community", icon: Users, label: "Community" },
+    { href: "/community", icon: Users, label: "Community" },
   ]
 
   const enterpriseApps = [{ href: "/research-platform", icon: FlaskConical, label: "Research Platform" }]
