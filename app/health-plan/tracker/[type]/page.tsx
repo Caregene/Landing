@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { TrackerFormModal } from "@/components/tracker-form-modal"
+import PageWrapper from "@/components/page-wrapper"
+import { symptomStorage } from "@/lib/log-track/symptomStorage"
+import { nutritionStorage } from "@/lib/log-track/nutritionStorage"
+import { medicationStorage } from "@/lib/log-track/medicationStorage" 
+
+
+
+
 
 export default function TrackerDetailsPage() {
   const params = useParams()
