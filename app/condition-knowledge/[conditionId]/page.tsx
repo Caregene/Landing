@@ -19,7 +19,6 @@ import {
   Stethoscope,
   FlaskConical,
   ExternalLink,
-  Calendar,
   Globe,
   FileText,
 } from "lucide-react"
@@ -174,26 +173,47 @@ export default function ConditionDetailPage({ params }: ConditionDetailPageProps
         {/* Content */}
         <Tabs defaultValue="overview" className="space-y-6">
           <div className="overflow-x-auto">
-            <TabsList className="grid w-full grid-cols-7 min-w-[700px] sm:min-w-0">
-              <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 sm:px-4">
+            <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground min-w-max">
+              <TabsTrigger
+                value="overview"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:bg-gray-50/80 data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:bg-gray-100 data-[state=inactive]:hover:text-gray-900"
+              >
                 Overview
               </TabsTrigger>
-              <TabsTrigger value="symptoms" className="text-xs sm:text-sm px-2 sm:px-4">
+              <TabsTrigger
+                value="symptoms"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:bg-gray-50/80 data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:bg-gray-100 data-[state=inactive]:hover:text-gray-900"
+              >
                 Symptoms
               </TabsTrigger>
-              <TabsTrigger value="diagnosis" className="text-xs sm:text-sm px-2 sm:px-4">
+              <TabsTrigger
+                value="diagnosis"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:bg-gray-50/80 data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:bg-gray-100 data-[state=inactive]:hover:text-gray-900"
+              >
                 Diagnosis
               </TabsTrigger>
-              <TabsTrigger value="treatment" className="text-xs sm:text-sm px-2 sm:px-4">
+              <TabsTrigger
+                value="treatment"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:bg-gray-50/80 data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:bg-gray-100 data-[state=inactive]:hover:text-gray-900"
+              >
                 Treatment
               </TabsTrigger>
-              <TabsTrigger value="research" className="text-xs sm:text-sm px-2 sm:px-4">
+              <TabsTrigger
+                value="management"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:bg-gray-50/80 data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:bg-gray-100 data-[state=inactive]:hover:text-gray-900"
+              >
+                Management
+              </TabsTrigger>
+              <TabsTrigger
+                value="research"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:bg-gray-50/80 data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:bg-gray-100 data-[state=inactive]:hover:text-gray-900"
+              >
                 Research
               </TabsTrigger>
-              <TabsTrigger value="daily-life" className="text-xs sm:text-sm px-2 sm:px-4">
-                Daily Life
-              </TabsTrigger>
-              <TabsTrigger value="resources" className="text-xs sm:text-sm px-2 sm:px-4">
+              <TabsTrigger
+                value="resources"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:bg-gray-50/80 data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:bg-gray-100 data-[state=inactive]:hover:text-gray-900"
+              >
                 Resources
               </TabsTrigger>
             </TabsList>
@@ -341,6 +361,20 @@ export default function ConditionDetailPage({ params }: ConditionDetailPageProps
             </div>
           </TabsContent>
 
+          <TabsContent value="management" className="space-y-6">
+            {/* Placeholder for Management content */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Management Strategies</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed">
+                  Management strategies for {condition.shortName} include various interventions and support systems.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="research" className="space-y-6">
             <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
               <CardContent className="p-6">
@@ -360,27 +394,6 @@ export default function ConditionDetailPage({ params }: ConditionDetailPageProps
               <ExternalLink className="h-4 w-4 mr-2" />
               Find Clinical Trials
             </Button>
-          </TabsContent>
-
-          <TabsContent value="daily-life" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Daily Life Impact
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-6 leading-relaxed">{condition.dailyLife}</p>
-                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                  <h5 className="font-medium text-amber-900 dark:text-amber-100 mb-2">Caregiver Support</h5>
-                  <p className="text-amber-800 dark:text-amber-200 leading-relaxed">
-                    Caring for a child with {condition.shortName} requires significant support. Connect with other
-                    families and healthcare teams for guidance.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           <TabsContent value="resources" className="space-y-6">

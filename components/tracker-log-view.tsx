@@ -47,34 +47,59 @@ export default function TrackerLogView({ onClose }: TrackerLogViewProps) {
   const [dragStartDate, setDragStartDate] = useState<Date | null>(null)
   const [dragEndDate, setDragEndDate] = useState<Date | null>(null)
 
-  // Mock data - replace with actual data fetching
   useEffect(() => {
-    const mockEntries: TrackerEntry[] = [
-      {
-        id: "1",
-        category: "symptom",
-        name: "Headache",
-        severity: 3,
-        notes: "Mild headache after lunch",
-        timestamp: new Date().toISOString(),
-      },
-      {
-        id: "2",
-        category: "nutrition",
-        name: "Breakfast",
-        notes: "Oatmeal with berries",
-        timestamp: new Date(Date.now() - 86400000).toISOString(),
-      },
-      {
-        id: "3",
-        category: "medication",
-        name: "Vitamin D",
-        notes: "Morning dose",
-        timestamp: new Date(Date.now() - 172800000).toISOString(),
-      },
-    ]
-    setEntries(mockEntries)
-    setFilteredEntries(mockEntries)
+    const loadRealEntries = () => {
+      const allEntries: TrackerEntry[] = []
+
+      // Load symptom entries
+      const symptomEntries = JSON.parse(localStorage.getItem("caregene-symptom-entries") || "[]")
+      symptomEntries.forEach((entry: any) => {
+        allEntries.push({
+          id: entry.id || `symptom-${entry.timestamp}`,
+          category: "symptom",
+          name: entry.name || "Symptom",
+          severity: entry.data?.severity,
+          notes: entry.data?.notes,
+          timestamp: entry.timestamp,
+          data: entry.data,
+        })
+      })
+
+      // Load nutrition entries
+      const nutritionEntries = JSON.parse(localStorage.getItem("caregene-nutrition-entries") || "[]")
+      nutritionEntries.forEach((entry: any) => {
+        allEntries.push({
+          id: entry.id || `nutrition-${entry.timestamp}`,
+          category: "nutrition",
+          name: entry.name || "Nutrition",
+          notes: entry.data?.notes,
+          timestamp: entry.timestamp,
+          data: entry.data,
+        })
+      })
+
+      // Load medication entries
+      const medicationEntries = JSON.parse(localStorage.getItem("caregene-medication-entries") || "[]")
+      medicationEntries.forEach((entry: any) => {
+        allEntries.push({
+          id: entry.id || `medication-${entry.timestamp}`,
+          category: "medication",
+          name: entry.name || "Medication",
+          notes: entry.data?.notes,
+          timestamp: entry.timestamp,
+          data: entry.data,
+        })
+      })
+
+      // Sort by timestamp (newest first)
+      allEntries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
+      console.log("[v0] Loaded tracker entries:", allEntries)
+      setEntries(allEntries)
+      setFilteredEntries(allEntries)
+    }
+
+    loadRealEntries()
   }, [])
 
   // Filter entries based on search, dates, and category

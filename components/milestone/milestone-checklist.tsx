@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -39,21 +39,29 @@ export function MilestoneChecklist({ childId, ageKey }: MilestoneChecklistProps)
   const [isSaving, setIsSaving] = useState(false)
   const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, boolean>>({})
   const [error, setError] = useState<string | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
+
+  const trackAnalytics = useCallback(() => {
+    if (!isInitialized) {
+      console.log("[v0] Tracking analytics for childId:", childId, "ageKey:", ageKey)
+      milestoneAnalytics.trackChecklistStart(childId, ageKey)
+      milestoneAnalytics.trackPageView("milestone_checklist", childId, ageKey)
+      setIsInitialized(true)
+    }
+  }, [childId, ageKey, isInitialized])
 
   useEffect(() => {
-    milestoneAnalytics.trackChecklistStart(childId, ageKey)
-    milestoneAnalytics.trackPageView("milestone_checklist", childId, ageKey)
+    trackAnalytics()
 
     console.log("[v0] Loading checklist for childId:", childId, "ageKey:", ageKey)
 
     const childData = milestoneStore.getChild(childId)
-    console.log("[v0] Child data found:", childData)
-
     if (!childData) {
-      console.log("[v0] Child not found, redirecting to children page")
-      router.push("/milestone/children")
+      console.log("[v0] Child data not loaded yet, showing loading...")
       return
     }
+
+    console.log("[v0] Child data loaded:", childData)
     setChild(childData)
 
     const checklistData = milestoneStore.getChecklist(ageKey as any)
@@ -76,91 +84,97 @@ export function MilestoneChecklist({ childId, ageKey }: MilestoneChecklistProps)
         setResponses(responseMap)
       }
     }
-  }, [childId, ageKey, router]) // Removed searchParams from dependency array
+  }, [childId, ageKey, trackAnalytics])
 
-  const updateResponse = async (itemId: string, answer: "yes" | "not_yet" | "not_sure", note?: string) => {
-    const newResponse: ChecklistResponse = {
-      itemId,
-      answer,
-      note: note || responses[itemId]?.note || "",
-      timestamp: new Date().toISOString(),
-    }
+  const updateResponse = useCallback(
+    async (itemId: string, answer: "yes" | "not_yet" | "not_sure", note?: string) => {
+      const newResponse: ChecklistResponse = {
+        itemId,
+        answer,
+        note: note || responses[itemId]?.note || "",
+        timestamp: new Date().toISOString(),
+      }
 
-    setOptimisticUpdates((prev) => ({ ...prev, [itemId]: true }))
-    setResponses((prev) => ({ ...prev, [itemId]: newResponse }))
+      setOptimisticUpdates((prev) => ({ ...prev, [itemId]: true }))
+      setResponses((prev) => ({ ...prev, [itemId]: newResponse }))
 
-    setIsSaving(true)
-    try {
-      if (!navigator.onLine) {
+      setIsSaving(true)
+      try {
+        if (!navigator.onLine) {
+          offlineManager.queueAction({
+            type: "update",
+            entity: "checklist",
+            data: { childId, ageKey, itemId, response: newResponse },
+          })
+        } else {
+          await milestoneStore.saveChecklistResponse(childId, ageKey, itemId, newResponse)
+        }
+
+        setTimeout(() => {
+          setOptimisticUpdates((prev) => {
+            const updated = { ...prev }
+            delete updated[itemId]
+            return updated
+          })
+        }, 500)
+      } catch (error) {
+        console.error("Failed to save response:", error)
+        setError("Failed to save response. It will be retried automatically.")
         offlineManager.queueAction({
           type: "update",
           entity: "checklist",
           data: { childId, ageKey, itemId, response: newResponse },
         })
-      } else {
-        await milestoneStore.saveChecklistResponse(childId, ageKey, itemId, newResponse)
-      }
 
-      setTimeout(() => {
+        setResponses((prev) => {
+          const updated = { ...prev }
+          delete updated[itemId]
+          return updated
+        })
         setOptimisticUpdates((prev) => {
           const updated = { ...prev }
           delete updated[itemId]
           return updated
         })
-      }, 500)
-    } catch (error) {
-      console.error("Failed to save response:", error)
-      setError("Failed to save response. It will be retried automatically.")
-      offlineManager.queueAction({
-        type: "update",
-        entity: "checklist",
-        data: { childId, ageKey, itemId, response: newResponse },
-      })
+      } finally {
+        setIsSaving(false)
+      }
+    },
+    [childId, ageKey, responses],
+  )
 
-      setResponses((prev) => {
-        const updated = { ...prev }
-        delete updated[itemId]
-        return updated
-      })
-      setOptimisticUpdates((prev) => {
-        const updated = { ...prev }
-        delete updated[itemId]
-        return updated
-      })
-    } finally {
-      setIsSaving(false)
-    }
-  }
+  const updateNote = useCallback(
+    async (itemId: string, note: string) => {
+      const existingResponse = responses[itemId]
+      if (!existingResponse) return
 
-  const updateNote = async (itemId: string, note: string) => {
-    const existingResponse = responses[itemId]
-    if (!existingResponse) return
+      const updatedResponse = { ...existingResponse, note, timestamp: new Date().toISOString() }
+      setResponses((prev) => ({ ...prev, [itemId]: updatedResponse }))
 
-    const updatedResponse = { ...existingResponse, note, timestamp: new Date().toISOString() }
-    setResponses((prev) => ({ ...prev, [itemId]: updatedResponse }))
+      try {
+        await milestoneStore.saveChecklistResponse(childId, ageKey, itemId, updatedResponse)
+      } catch (error) {
+        console.error("Failed to save note:", error)
+      }
+    },
+    [childId, ageKey, responses],
+  )
 
-    try {
-      await milestoneStore.saveChecklistResponse(childId, ageKey, itemId, updatedResponse)
-    } catch (error) {
-      console.error("Failed to save note:", error)
-    }
-  }
-
-  const getProgress = () => {
+  const progress = useMemo(() => {
     if (!checklist) return { answered: 0, total: 0, percentage: 0 }
 
     const total = checklist.items.length
     const answered = Object.keys(responses).length
     return { answered, total, percentage: total > 0 ? (answered / total) * 100 : 0 }
-  }
+  }, [checklist, responses])
 
-  const getFilteredItems = () => {
+  const filteredItems = useMemo(() => {
     if (!checklist) return []
     if (selectedCategory === "all") return checklist.items
     return checklist.items.filter((item) => item.category === selectedCategory)
-  }
+  }, [checklist, selectedCategory])
 
-  const getResults = () => {
+  const results = useMemo(() => {
     if (!checklist) return { met: [], notYet: [], notSure: [] }
 
     const met = checklist.items.filter((item) => responses[item.id]?.answer === "yes")
@@ -168,7 +182,12 @@ export function MilestoneChecklist({ childId, ageKey }: MilestoneChecklistProps)
     const notSure = checklist.items.filter((item) => responses[item.id]?.answer === "not_sure")
 
     return { met, notYet, notSure }
-  }
+  }, [checklist, responses])
+
+  const categories = useMemo(() => {
+    if (!checklist) return []
+    return [...new Set(checklist.items.map((item) => item.category))]
+  }, [checklist])
 
   const isBetweenAges = () => {
     if (!child) return false
@@ -177,7 +196,6 @@ export function MilestoneChecklist({ childId, ageKey }: MilestoneChecklistProps)
   }
 
   const finishChecklist = () => {
-    const results = getResults()
     milestoneAnalytics.trackChecklistComplete(childId, ageKey, {
       total: progress.total,
       met: results.met.length,
@@ -199,11 +217,7 @@ export function MilestoneChecklist({ childId, ageKey }: MilestoneChecklistProps)
     )
   }
 
-  const progress = getProgress()
-  const filteredItems = getFilteredItems()
-  const categories = [...new Set(checklist.items.map((item) => item.category))]
   const allAnswered = progress.answered === progress.total
-  const results = getResults()
 
   return (
     <div className="min-h-screen bg-background">
@@ -460,17 +474,7 @@ export function MilestoneChecklist({ childId, ageKey }: MilestoneChecklistProps)
 
                     {item.isKeyItem && response?.answer === "not_yet" && (
                       <div className="bg-amber-50 border border-amber-200 rounded-lg p-2" role="alert">
-                        <p className="text-xs text-amber-800">
-                          Consider discussing at your next visit.{" "}
-                          <Button
-                            variant="link"
-                            size="sm"
-                            onClick={() => router.push(`/milestone/appointments/${childId}`)}
-                            className="p-0 h-auto text-amber-800 underline text-xs min-h-[32px]"
-                          >
-                            Schedule appointment
-                          </Button>
-                        </p>
+                        <p className="text-xs text-amber-800">Consider discussing at your next visit.</p>
                       </div>
                     )}
                   </div>
