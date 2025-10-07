@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { TrackerFormModal } from "@/components/tracker-form-modal"
 import { symptomStorage } from "@/lib/log-track/symptomStorage"
 import { nutritionStorage } from "@/lib/log-track/nutritionStorage"
+import { medicationStorage } from "@/lib/log-track/medicationStorage"
 
 export default function TrackerDetailsPage() {
   const params = useParams()
@@ -178,6 +179,13 @@ export default function TrackerDetailsPage() {
         nutritionStorage.add(entryData)
       } catch (e) {
         console.error("[tracker] Failed to submit nutrition entry", e)
+      }
+    } else if (trackerType === "medication") {
+      console.log("[tracker] Submitting medication entry via medicationStorage.add")
+      try {
+        medicationStorage.add(entryData)
+      } catch (e) {
+        console.error("[tracker] Failed to submit medication entry", e)
       }
     } else {
       const storageKey = `caregene-${trackerType}-entries`

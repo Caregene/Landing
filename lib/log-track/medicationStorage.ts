@@ -1,27 +1,20 @@
 // Medication tracker storage adapter
 // - Saves entries locally (localStorage)
-// - Asynchronously POSTs to backend using expected schema
+// - Asynchronously POSTs to backend and merges backend-generated fields
 
 export type MedicationEntry = {
   id: string
   name: string
   childId: string
-  timestamp: string // ISO string
-  data: Record<string, any> // e.g., { dose: string; time?: string; notes?: string }
+  timestamp: string
+  data: {
+    dose?: string
+    time?: string
+    notes?: string
+  }
 }
 
 const MEDICATION_KEY = 'caregene-medication-entries'
-
-function ensureIsoIfDatetime(value: any): any {
-  if (typeof value !== 'string') return value
-  // If looks like a datetime (e.g., 2025-10-07T10:00), try to coerce to ISO
-  if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) {
-    try {
-      return new Date(value).toISOString()
-    } catch {}
-  }
-  return value
-}
 
 export const medicationStorage = {
   getAll(): MedicationEntry[] {
@@ -38,18 +31,12 @@ export const medicationStorage = {
     // Client-only guard
     if (typeof window === 'undefined') return
 
-    console.log('Adding medication entry', entry)
-
-    const normalizedData: Record<string, any> = { ...entry.data }
-    if (normalizedData.time) {
-      normalizedData.time = ensureIsoIfDatetime(normalizedData.time)
-    }
-
+    // Normalize and ensure id/timestamp
     const toSave: MedicationEntry = {
       ...entry,
       id: entry.id && String(entry.id).trim() ? String(entry.id) : Date.now().toString(),
       timestamp: entry.timestamp && String(entry.timestamp).trim() ? entry.timestamp : new Date().toISOString(),
-      data: normalizedData,
+      data: { ...entry.data },
     }
 
     // Save locally first
@@ -58,7 +45,7 @@ export const medicationStorage = {
     localStorage.setItem(MEDICATION_KEY, JSON.stringify(all))
     console.log('[medicationStorage] Saved locally:', toSave)
 
-    // Backend expects { childId, name, data }
+    // POST to backend in background with backend schema: { childId, name, data }
     ;(async () => {
       const requestBody = {
         childId: toSave.childId,
@@ -90,18 +77,18 @@ export const medicationStorage = {
           return
         }
 
-        const payload = (await res.json().catch(() => null)) as { id?: string; created_at?: string } | null
+        const payload = (await res.json().catch(() => null)) as { id?: string; created_at?: string; timestamp?: string } | null
         console.log('[medicationStorage] POST response <-', payload)
         if (!payload) return
 
-        // Merge backend id/created_at into just-saved entry
+        // Merge backend id/timestamp into just-saved entry (support created_at or timestamp)
         const updated = medicationStorage.getAll()
         const idx = updated.findIndex((e) => e.id === toSave.id)
         if (idx !== -1) {
           const merged: MedicationEntry = {
             ...updated[idx],
             id: payload.id ?? updated[idx].id,
-            timestamp: payload.created_at ?? updated[idx].timestamp,
+            timestamp: payload.timestamp ?? payload.created_at ?? updated[idx].timestamp,
           }
           updated[idx] = merged
           localStorage.setItem(MEDICATION_KEY, JSON.stringify(updated))

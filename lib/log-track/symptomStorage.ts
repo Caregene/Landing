@@ -78,58 +78,74 @@ export type SymptomEntry = {
     },
   
     add(entry: SymptomEntry) {
+      // Client-only guard
+      if (typeof window === 'undefined') return;
+
+      // Normalize id/timestamp and ensure ISO startTime
+      const toSave: SymptomEntry = {
+        ...entry,
+        id: entry.id && String(entry.id).trim() ? String(entry.id) : Date.now().toString(),
+        timestamp: entry.timestamp && String(entry.timestamp).trim() ? entry.timestamp : new Date().toISOString(),
+        data: {
+          ...entry.data,
+          startTime: entry.data?.startTime ? new Date(entry.data.startTime).toISOString() : new Date().toISOString(),
+        },
+      };
+
       // Save locally first
       const all = symptomStorage.getAll();
-      all.push(entry);
+      all.push(toSave);
       localStorage.setItem(SYMPTOM_KEY, JSON.stringify(all));
-      console.log('[symptomStorage] Saved locally:', entry);
-  
-      // Send to backend only if running in browser
-      if (typeof window !== 'undefined') {
-        (async () => {
-          // Map to backend contract: id -> symptom_id, childId -> user_id
-          const requestBody = {
-            user_id: entry.childId,
-            symptom_id: entry.id,
-            name: entry.name,
-            data: entry.data,
-          } as const;
+      console.log('[symptomStorage] Saved locally:', toSave);
 
-          console.log('[symptomStorage] POST body ->', requestBody);
-          try {
-            const res = await fetch('http://localhost:8000/api/v1/tracking/symptom', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(requestBody),
-            });
-  
-            if (!res.ok) {
-              console.error('[symptomStorage] Backend responded with non-OK status', res.status);
-              return;
-            }
-  
-            const payload = await res.json().catch(() => null) as { id?: string; created_at?: string } | null;
-            console.log('[symptomStorage] POST response <-', payload);
-            if (!payload) return;
-  
-            // Merge backend id/created_at into the just-saved entry
-            const updated = symptomStorage.getAll();
-            const idx = updated.findIndex((e) => e.id === entry.id);
-            if (idx !== -1) {
-              const merged: SymptomEntry = {
-                ...updated[idx],
-                id: payload.id ?? updated[idx].id,
-                timestamp: payload.created_at ?? updated[idx].timestamp,
-              };
-              updated[idx] = merged;
-              localStorage.setItem(SYMPTOM_KEY, JSON.stringify(updated));
-              console.log('[symptomStorage] Updated entry with backend response:', merged);
-            }
-          } catch (err) {
-            console.error('[symptomStorage] Failed to POST symptom entry', err);
+      // Backend expects { childId, name, data }
+      (async () => {
+        const requestBody = {
+          childId: toSave.childId,
+          name: toSave.name,
+          data: toSave.data,
+        } as const;
+
+        console.log('[symptomStorage] POST URL -> http://localhost:8000/api/v1/tracking/symptom');
+        console.log('[symptomStorage] POST body ->', requestBody);
+        try {
+          const res = await fetch('http://localhost:8000/api/v1/tracking/symptom', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+          });
+
+          if (!res.ok) {
+            let errorBody: unknown = null;
+            try {
+              const text = await res.text();
+              try { errorBody = JSON.parse(text); } catch { errorBody = text; }
+            } catch {}
+            console.error('[symptomStorage] Backend responded with non-OK status', res.status, errorBody);
+            return;
           }
-        })();
-      }
+
+          const payload = await res.json().catch(() => null) as { id?: string; created_at?: string } | null;
+          console.log('[symptomStorage] POST response <-', payload);
+          if (!payload) return;
+
+          // Merge backend id/created_at into the just-saved entry
+          const updated = symptomStorage.getAll();
+          const idx = updated.findIndex((e) => e.id === toSave.id);
+          if (idx !== -1) {
+            const merged: SymptomEntry = {
+              ...updated[idx],
+              id: payload.id ?? updated[idx].id,
+              timestamp: payload.created_at ?? updated[idx].timestamp,
+            };
+            updated[idx] = merged;
+            localStorage.setItem(SYMPTOM_KEY, JSON.stringify(updated));
+            console.log('[symptomStorage] Updated entry with backend response:', merged);
+          }
+        } catch (err) {
+          console.error('[symptomStorage] Failed to POST symptom entry', err);
+        }
+      })();
     },
   
     clear() {
