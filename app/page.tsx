@@ -8,7 +8,7 @@ import Link from "next/link"
 export default function HomePage() {
   const [query, setQuery] = useState("")
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e:any) => {
     e.preventDefault()
     console.log("Search query:", query)
   }
