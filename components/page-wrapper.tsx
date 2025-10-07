@@ -15,7 +15,7 @@ interface PageWrapperProps {
 }
 
 export function PageWrapper({ children, selectedChildId, onChildSelect, showChildSelector = false }: PageWrapperProps) {
-  const { isPinned } = useNavigation() // Get pinned state from navigation context
+  const { isPinned } = useNavigation()
 
   return (
     <div className="min-h-screen bg-background">
@@ -27,11 +27,12 @@ export function PageWrapper({ children, selectedChildId, onChildSelect, showChil
       />
       <main
         className={cn(
-          "pt-4 transition-all duration-300 ease-in-out", // Reduced top padding from pt-16 to pt-4 to eliminate empty space
-          isPinned
-            ? "pl-[13rem] lg:pl-[14rem] xl:pl-[15rem]" // Use exact rem values that match navigation widths plus border
-            : "pl-[3rem] lg:pl-[3.5rem]", // Match collapsed navigation widths plus border
-          "pr-4 lg:pr-6", // Added right padding to prevent content from touching screen edge
+          "pt-14 transition-all duration-300 ease-in-out",
+          "px-2 sm:px-4 md:px-6",
+          // Desktop navigation spacing
+          isPinned ? "lg:pl-[13rem] xl:pl-[15rem]" : "lg:pl-[3.5rem]",
+          // Mobile and tablet - no left padding since nav is overlay
+          "pl-2 sm:pl-4 md:pl-6 lg:pl-[3.5rem]",
         )}
       >
         {children}

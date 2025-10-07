@@ -33,7 +33,7 @@ export default function SubscriptionsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Basic Care</CardTitle>
+                <CardTitle className="text-lg">Basic Free</CardTitle>
                 <CardDescription>Essential genetic health tracking</CardDescription>
                 <div className="text-2xl font-bold">Free</div>
               </CardHeader>
@@ -64,7 +64,7 @@ export default function SubscriptionsPage() {
                 </div>
                 <CardDescription>Advanced AI-powered insights</CardDescription>
                 <div className="text-2xl font-bold">
-                  $29<span className="text-sm font-normal">/month</span>
+                  $19.99<span className="text-sm font-normal">/month</span>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -92,10 +92,10 @@ export default function SubscriptionsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Family Care</CardTitle>
-                <CardDescription>Complete family health management</CardDescription>
+                <CardTitle className="text-lg">Scholar AI</CardTitle>
+                <CardDescription>Advanced AI research and insights</CardDescription>
                 <div className="text-2xl font-bold">
-                  $79<span className="text-sm font-normal">/month</span>
+                  $39.99<span className="text-sm font-normal">/month</span>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -105,18 +105,18 @@ export default function SubscriptionsPage() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm">Up to 6 family members</span>
+                  <span className="text-sm">Advanced AI research tools</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm">Family health insights</span>
+                  <span className="text-sm">Scientific literature analysis</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm">Genetic counselor access</span>
+                  <span className="text-sm">Expert consultation access</span>
                 </div>
                 <Button className="w-full mt-4 bg-transparent" variant="outline" asChild>
-                  <Link href="/signin">Choose Family</Link>
+                  <Link href="/signin">Choose Scholar AI</Link>
                 </Button>
               </CardContent>
             </Card>

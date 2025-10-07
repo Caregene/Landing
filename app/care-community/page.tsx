@@ -34,85 +34,113 @@ import {
 export default function CareCommunityPage() {
   return (
     <PageWrapper>
-      <div className="min-h-screen bg-background">
-        <div className="bg-card border-b border-border px-4 sm:px-6 py-2">
+      <div className="min-h-screen bg-background pb-20 sm:pb-0">
+        <div className="bg-card border-b border-border px-3 sm:px-4 md:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-base sm:text-lg md:text-xl font-semibold text-foreground">Care Community</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-foreground">Care Community</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
                 Connect with families facing similar genetic health journeys
               </p>
             </div>
           </div>
         </div>
 
-        <main className="px-4 py-6 max-w-7xl mx-auto">
+        <main className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 max-w-7xl mx-auto">
           <div className="max-w-7xl mx-auto">
-            <Tabs defaultValue="community" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 h-auto">
-                <TabsTrigger value="community" className="text-xs sm:text-sm">
-                  Community
-                </TabsTrigger>
-                <TabsTrigger value="groups" className="text-xs sm:text-sm">
-                  Support Groups
-                </TabsTrigger>
-                <TabsTrigger value="experts" className="text-xs sm:text-sm">
-                  Expert Connect
-                </TabsTrigger>
-                <TabsTrigger value="events" className="text-xs sm:text-sm">
-                  Events
-                </TabsTrigger>
-                <TabsTrigger value="resources" className="text-xs sm:text-sm">
-                  Resources
-                </TabsTrigger>
-                <TabsTrigger value="insights" className="text-xs sm:text-sm">
-                  Insights
-                </TabsTrigger>
-              </TabsList>
+            <Tabs defaultValue="community" className="space-y-4 sm:space-y-6">
+              <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-2 z-50 sm:static sm:border-t-0 sm:p-0 sm:bg-transparent">
+                <div className="w-full overflow-x-auto">
+                  <TabsList className="inline-flex h-10 sm:h-12 items-center justify-start rounded-lg bg-gray-100/50 p-1 text-muted-foreground min-w-max w-full sm:w-auto">
+                    <TabsTrigger
+                      value="community"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 sm:px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:bg-gray-50/80 data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:bg-gray-100 data-[state=inactive]:hover:text-gray-900 min-w-[90px] touch-manipulation"
+                    >
+                      Community
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="groups"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 sm:px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:bg-gray-50/80 data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:bg-gray-100 data-[state=inactive]:hover:text-gray-900 min-w-[100px] touch-manipulation"
+                    >
+                      Groups
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="experts"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 sm:px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:bg-gray-50/80 data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:bg-gray-100 data-[state=inactive]:hover:text-gray-900 min-w-[90px] touch-manipulation"
+                    >
+                      Experts
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="events"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 sm:px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:bg-gray-50/80 data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:bg-gray-100 data-[state=inactive]:hover:text-gray-900 min-w-[80px] touch-manipulation"
+                    >
+                      Events
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="resources"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 sm:px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:bg-gray-50/80 data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:bg-gray-100 data-[state=inactive]:hover:text-gray-900 min-w-[100px] touch-manipulation"
+                    >
+                      Resources
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="wellness"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 sm:px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:bg-gray-50/80 data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:bg-gray-100 data-[state=inactive]:hover:text-gray-900 min-w-[90px] touch-manipulation"
+                    >
+                      Wellness
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="insights"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 sm:px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:bg-gray-50/80 data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:bg-gray-100 data-[state=inactive]:hover:text-gray-900 min-w-[90px] touch-manipulation"
+                    >
+                      Insights
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+              </div>
 
               {/* Community Feed */}
-              <TabsContent value="community" className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <TabsContent value="community" className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
                   <Card>
-                    <CardContent className="p-4">
+                    <CardContent className="p-3 sm:p-4">
                       <div className="flex items-center space-x-2">
-                        <Users className="h-5 w-5 text-primary" />
-                        <div>
-                          <p className="text-2xl font-bold">2,847</p>
-                          <p className="text-sm text-muted-foreground">Active Members</p>
+                        <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-lg sm:text-2xl font-bold">2,847</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">Active Members</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                   <Card>
-                    <CardContent className="p-4">
+                    <CardContent className="p-3 sm:p-4">
                       <div className="flex items-center space-x-2">
-                        <MessageSquare className="h-5 w-5 text-green-500" />
-                        <div>
-                          <p className="text-2xl font-bold">156</p>
-                          <p className="text-sm text-muted-foreground">Posts Today</p>
+                        <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-lg sm:text-2xl font-bold">156</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">Posts Today</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                   <Card>
-                    <CardContent className="p-4">
+                    <CardContent className="p-3 sm:p-4">
                       <div className="flex items-center space-x-2">
-                        <TrendingUp className="h-5 w-5 text-blue-500" />
-                        <div>
-                          <p className="text-2xl font-bold">89%</p>
-                          <p className="text-sm text-muted-foreground">Response Rate</p>
+                        <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-lg sm:text-2xl font-bold">89%</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">Response Rate</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                   <Card>
-                    <CardContent className="p-4">
+                    <CardContent className="p-3 sm:p-4">
                       <div className="flex items-center space-x-2">
-                        <Award className="h-5 w-5 text-yellow-500" />
-                        <div>
-                          <p className="text-2xl font-bold">4.9</p>
-                          <p className="text-sm text-muted-foreground">Community Rating</p>
+                        <Award className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-lg sm:text-2xl font-bold">4.9</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">Community Rating</p>
                         </div>
                       </div>
                     </CardContent>
@@ -121,31 +149,43 @@ export default function CareCommunityPage() {
 
                 {/* Quick Actions */}
                 <Card>
-                  <CardContent className="p-4">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
-                      <Avatar className="shrink-0">
+                  <CardContent className="p-3 sm:p-4 md:p-6">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                      <Avatar className="shrink-0 w-10 h-10 sm:w-12 sm:h-12">
                         <AvatarFallback>YU</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 w-full">
                         <Textarea
                           placeholder="Share your experience, ask a question, or offer support..."
-                          className="min-h-[80px] resize-none"
+                          className="min-h-[80px] resize-none text-sm sm:text-base"
                         />
                       </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between mt-4 space-y-4 sm:space-y-0">
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="outline">Anonymous</Badge>
-                        <Badge variant="outline">Condition-Specific</Badge>
-                        <Badge variant="outline">Urgent</Badge>
-                        <Badge variant="outline">Success Story</Badge>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between mt-4 space-y-3 sm:space-y-0">
+                      <div className="flex flex-wrap gap-1 sm:gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          Anonymous
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          Condition-Specific
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          Urgent
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          Success Story
+                        </Badge>
                       </div>
                       <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                        <Button variant="outline" size="sm" className="w-full sm:w-auto bg-transparent">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto bg-transparent touch-manipulation"
+                        >
                           <Bookmark className="h-4 w-4 mr-2" />
                           Save Draft
                         </Button>
-                        <Button className="w-full sm:w-auto">
+                        <Button className="w-full sm:w-auto touch-manipulation">
                           <Send className="h-4 w-4 mr-2" />
                           Share
                         </Button>
@@ -155,7 +195,7 @@ export default function CareCommunityPage() {
                 </Card>
 
                 {/* Community Posts */}
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {[
                     {
                       id: 1,
@@ -201,14 +241,14 @@ export default function CareCommunityPage() {
                     },
                   ].map((post) => (
                     <Card key={post.id} className={post.isUrgent ? "border-orange-200 bg-orange-50/50" : ""}>
-                      <CardContent className="p-4 sm:p-6">
+                      <CardContent className="p-3 sm:p-4 md:p-6">
                         <div className="flex items-start space-x-3 sm:space-x-4">
-                          <Avatar className="shrink-0">
-                            <AvatarFallback>{post.avatar}</AvatarFallback>
+                          <Avatar className="shrink-0 w-8 h-8 sm:w-10 sm:h-10">
+                            <AvatarFallback className="text-xs sm:text-sm">{post.avatar}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
-                            <div className="flex flex-wrap items-center gap-2 mb-2">
-                              <span className="font-semibold">{post.author}</span>
+                            <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-2">
+                              <span className="font-semibold text-sm sm:text-base">{post.author}</span>
                               {post.isExpert && (
                                 <Badge variant="secondary" className="text-xs">
                                   <UserCheck className="h-3 w-3 mr-1" />
@@ -224,10 +264,10 @@ export default function CareCommunityPage() {
                               <Badge variant="outline" className="text-xs">
                                 {post.condition}
                               </Badge>
-                              <span className="text-sm text-muted-foreground">{post.time}</span>
+                              <span className="text-xs sm:text-sm text-muted-foreground">{post.time}</span>
                             </div>
-                            <p className="text-sm mb-4">{post.content}</p>
-                            <div className="flex flex-wrap gap-2 mb-3">
+                            <p className="text-sm sm:text-base mb-3 sm:mb-4">{post.content}</p>
+                            <div className="flex flex-wrap gap-1 sm:gap-2 mb-3">
                               {post.tags.map((tag) => (
                                 <Badge key={tag} variant="outline" className="text-xs">
                                   #{tag}
@@ -235,19 +275,19 @@ export default function CareCommunityPage() {
                               ))}
                             </div>
                             <div className="flex flex-wrap gap-2 sm:gap-4">
-                              <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm" className="touch-manipulation">
                                 <Heart className="h-4 w-4 mr-1" />
                                 {post.likes}
                               </Button>
-                              <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm" className="touch-manipulation">
                                 <MessageSquare className="h-4 w-4 mr-1" />
                                 {post.comments}
                               </Button>
-                              <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm" className="touch-manipulation">
                                 <Bookmark className="h-4 w-4 mr-1" />
                                 Save
                               </Button>
-                              <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm" className="touch-manipulation">
                                 Share
                               </Button>
                             </div>
@@ -260,25 +300,25 @@ export default function CareCommunityPage() {
               </TabsContent>
 
               {/* Support Groups */}
-              <TabsContent value="groups" className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+              <TabsContent value="groups" className="space-y-4 sm:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input placeholder="Search groups..." className="pl-10 w-full sm:w-80" />
                     </div>
-                    <Button variant="outline" size="sm" className="w-full sm:w-auto bg-transparent">
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto bg-transparent touch-manipulation">
                       <Filter className="h-4 w-4 mr-2" />
                       Filter
                     </Button>
                   </div>
-                  <Button className="w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto touch-manipulation">
                     <Plus className="h-4 w-4 mr-2" />
                     Create Group
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                   {[
                     {
                       name: "22q11.2 Deletion Support",
@@ -310,12 +350,12 @@ export default function CareCommunityPage() {
                     },
                   ].map((group, index) => (
                     <Card key={index} className="hover:shadow-md transition-shadow">
-                      <CardHeader>
+                      <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg">{group.name}</CardTitle>
+                          <CardTitle className="text-base sm:text-lg">{group.name}</CardTitle>
                           {group.isPrivate && <Shield className="h-4 w-4 text-muted-foreground" />}
                         </div>
-                        <CardDescription>{group.description}</CardDescription>
+                        <CardDescription className="text-sm">{group.description}</CardDescription>
                       </CardHeader>
                       <CardContent>
                         <div className="flex items-center justify-between mb-4">
@@ -329,7 +369,7 @@ export default function CareCommunityPage() {
                             </Badge>
                           </div>
                         </div>
-                        <Button className="w-full">Join Group</Button>
+                        <Button className="w-full touch-manipulation">Join Group</Button>
                       </CardContent>
                     </Card>
                   ))}
@@ -337,8 +377,8 @@ export default function CareCommunityPage() {
               </TabsContent>
 
               {/* Expert Connect */}
-              <TabsContent value="experts" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              <TabsContent value="experts" className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                   {[
                     {
                       name: "Dr. Jennifer Chen",
@@ -369,18 +409,20 @@ export default function CareCommunityPage() {
                     },
                   ].map((expert, index) => (
                     <Card key={index}>
-                      <CardHeader>
-                        <div className="flex items-center space-x-4">
-                          <Avatar className="h-16 w-16">
-                            <AvatarFallback className="text-lg">{expert.image}</AvatarFallback>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center space-x-3 sm:space-x-4">
+                          <Avatar className="h-12 w-12 sm:h-16 sm:w-16">
+                            <AvatarFallback className="text-sm sm:text-lg">{expert.image}</AvatarFallback>
                           </Avatar>
-                          <div>
-                            <CardTitle className="text-lg">{expert.name}</CardTitle>
-                            <CardDescription>{expert.title}</CardDescription>
+                          <div className="min-w-0 flex-1">
+                            <CardTitle className="text-base sm:text-lg">{expert.name}</CardTitle>
+                            <CardDescription className="text-sm">{expert.title}</CardDescription>
                             <div className="flex items-center space-x-1 mt-1">
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <span className="text-sm font-medium">{expert.rating}</span>
-                              <span className="text-sm text-muted-foreground">({expert.reviews} reviews)</span>
+                              <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-yellow-400 text-yellow-400" />
+                              <span className="text-xs sm:text-sm font-medium">{expert.rating}</span>
+                              <span className="text-xs sm:text-sm text-muted-foreground">
+                                ({expert.reviews} reviews)
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -395,12 +437,12 @@ export default function CareCommunityPage() {
                             <span className="text-sm font-medium">Availability:</span>
                             <p className="text-sm text-muted-foreground">{expert.availability}</p>
                           </div>
-                          <div className="flex space-x-2">
-                            <Button size="sm" className="flex-1">
+                          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                            <Button size="sm" className="flex-1 touch-manipulation">
                               <Video className="h-4 w-4 mr-2" />
                               Video Call
                             </Button>
-                            <Button variant="outline" size="sm" className="flex-1 bg-transparent">
+                            <Button variant="outline" size="sm" className="flex-1 bg-transparent touch-manipulation">
                               <MessageCircle className="h-4 w-4 mr-2" />
                               Message
                             </Button>
@@ -413,16 +455,16 @@ export default function CareCommunityPage() {
               </TabsContent>
 
               {/* Events */}
-              <TabsContent value="events" className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-                  <h2 className="text-xl font-semibold">Upcoming Events</h2>
-                  <Button className="w-full sm:w-auto">
+              <TabsContent value="events" className="space-y-4 sm:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                  <h2 className="text-lg sm:text-xl font-semibold">Upcoming Events</h2>
+                  <Button className="w-full sm:w-auto touch-manipulation">
                     <Plus className="h-4 w-4 mr-2" />
                     Create Event
                   </Button>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {[
                     {
                       title: "Genetic Testing Q&A Session",
@@ -453,10 +495,10 @@ export default function CareCommunityPage() {
                     },
                   ].map((event, index) => (
                     <Card key={index}>
-                      <CardContent className="p-4 sm:p-6">
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-4 sm:space-y-0">
+                      <CardContent className="p-3 sm:p-4 md:p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
                           <div className="flex-1">
-                            <h3 className="font-semibold text-lg mb-2">{event.title}</h3>
+                            <h3 className="font-semibold text-base sm:text-lg mb-2">{event.title}</h3>
                             <p className="text-sm text-muted-foreground mb-3">{event.description}</p>
                             <div className="flex flex-wrap gap-2 sm:gap-4 text-sm text-muted-foreground mb-2">
                               <div className="flex items-center">
@@ -479,10 +521,14 @@ export default function CareCommunityPage() {
                             <p className="text-sm text-muted-foreground">Hosted by {event.host}</p>
                           </div>
                           <div className="flex flex-col space-y-2 w-full sm:w-auto">
-                            <Button size="sm" className="w-full sm:w-auto">
+                            <Button size="sm" className="w-full sm:w-auto touch-manipulation">
                               Join Event
                             </Button>
-                            <Button variant="outline" size="sm" className="w-full sm:w-auto bg-transparent">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto bg-transparent touch-manipulation"
+                            >
                               Remind Me
                             </Button>
                           </div>
@@ -494,8 +540,8 @@ export default function CareCommunityPage() {
               </TabsContent>
 
               {/* Resources */}
-              <TabsContent value="resources" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              <TabsContent value="resources" className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                   {[
                     {
                       title: "Early Intervention Guide",
@@ -536,16 +582,60 @@ export default function CareCommunityPage() {
                     },
                   ].map((resource, index) => (
                     <Card key={index}>
-                      <CardHeader>
-                        <CardTitle className="text-lg">{resource.title}</CardTitle>
-                        <CardDescription>{resource.description}</CardDescription>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base sm:text-lg">{resource.title}</CardTitle>
+                        <CardDescription className="text-sm">{resource.description}</CardDescription>
                       </CardHeader>
                       <CardContent>
                         <div className="flex items-center justify-between mb-4">
-                          <Badge variant="outline">{resource.type}</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {resource.type}
+                          </Badge>
                           <span className="text-sm text-muted-foreground">{resource.downloads} downloads</span>
                         </div>
-                        <Button className="w-full">Download Resource</Button>
+                        <Button className="w-full touch-manipulation">Download Resource</Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              {/* Wellness */}
+              <TabsContent value="wellness" className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                  {[
+                    {
+                      title: "Mindfulness Meditation Guide",
+                      type: "PDF Guide",
+                      downloads: 987,
+                      description: "A guide to mindfulness meditation for stress relief",
+                    },
+                    {
+                      title: "Healthy Eating Plan",
+                      type: "Resource Kit",
+                      downloads: 654,
+                      description: "A balanced eating plan for overall health",
+                    },
+                    {
+                      title: "Exercise Routine",
+                      type: "Handbook",
+                      downloads: 321,
+                      description: "A weekly exercise routine for physical well-being",
+                    },
+                  ].map((wellness, index) => (
+                    <Card key={index}>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base sm:text-lg">{wellness.title}</CardTitle>
+                        <CardDescription className="text-sm">{wellness.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center justify-between mb-4">
+                          <Badge variant="outline" className="text-xs">
+                            {wellness.type}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">{wellness.downloads} downloads</span>
+                        </div>
+                        <Button className="w-full touch-manipulation">Download Wellness Resource</Button>
                       </CardContent>
                     </Card>
                   ))}
@@ -553,23 +643,25 @@ export default function CareCommunityPage() {
               </TabsContent>
 
               {/* Insights */}
-              <TabsContent value="insights" className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+              <TabsContent value="insights" className="space-y-4 sm:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                   <div>
-                    <h2 className="text-xl font-semibold">Community Insights</h2>
-                    <p className="text-muted-foreground">Data-driven insights from our community</p>
+                    <h2 className="text-lg sm:text-xl font-semibold">Community Insights</h2>
+                    <p className="text-muted-foreground text-sm sm:text-base">
+                      Data-driven insights from our community
+                    </p>
                   </div>
-                  <Button variant="outline" className="w-full sm:w-auto bg-transparent">
+                  <Button variant="outline" className="w-full sm:w-auto bg-transparent touch-manipulation">
                     <TrendingUp className="h-4 w-4 mr-2" />
                     View Full Report
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center space-x-2">
-                        <Activity className="h-5 w-5 text-blue-500" />
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+                        <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
                         <span>Most Discussed Topics</span>
                       </CardTitle>
                     </CardHeader>
@@ -583,10 +675,10 @@ export default function CareCommunityPage() {
                         ].map((item, index) => (
                           <div key={index} className="flex items-center justify-between">
                             <div>
-                              <p className="font-medium">{item.topic}</p>
-                              <p className="text-sm text-muted-foreground">{item.posts} posts</p>
+                              <p className="font-medium text-sm">{item.topic}</p>
+                              <p className="text-xs text-muted-foreground">{item.posts} posts</p>
                             </div>
-                            <Badge variant="outline" className="text-green-600">
+                            <Badge variant="outline" className="text-green-600 text-xs">
                               {item.trend}
                             </Badge>
                           </div>
@@ -596,9 +688,9 @@ export default function CareCommunityPage() {
                   </Card>
 
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center space-x-2">
-                        <Lightbulb className="h-5 w-5 text-yellow-500" />
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+                        <Lightbulb className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
                         <span>Success Stories</span>
                       </CardTitle>
                     </CardHeader>
@@ -625,9 +717,9 @@ export default function CareCommunityPage() {
                   </Card>
 
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center space-x-2">
-                        <Target className="h-5 w-5 text-red-500" />
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+                        <Target className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
                         <span>Resource Usage</span>
                       </CardTitle>
                     </CardHeader>
@@ -663,12 +755,12 @@ export default function CareCommunityPage() {
                 </div>
 
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Trending Discussions</CardTitle>
-                    <CardDescription>Hot topics in the community right now</CardDescription>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base sm:text-lg">Trending Discussions</CardTitle>
+                    <CardDescription className="text-sm">Hot topics in the community right now</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                       {[
                         {
                           title: "New Gene Therapy Breakthrough",
@@ -699,9 +791,12 @@ export default function CareCommunityPage() {
                           trend: "🤔 Debated",
                         },
                       ].map((discussion, index) => (
-                        <div key={index} className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                        <div
+                          key={index}
+                          className="p-3 sm:p-4 border rounded-lg hover:bg-muted/50 cursor-pointer touch-manipulation"
+                        >
                           <div className="flex items-start justify-between mb-2">
-                            <h4 className="font-medium">{discussion.title}</h4>
+                            <h4 className="font-medium text-sm sm:text-base">{discussion.title}</h4>
                             <Badge variant="outline" className="text-xs">
                               {discussion.trend}
                             </Badge>

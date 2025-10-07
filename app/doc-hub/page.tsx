@@ -1,52 +1,38 @@
 "use client"
 
 import type React from "react"
-
+import { DocumentAnalytics } from "@/components/document-analytics"
 import { useState, useEffect, useRef } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Card, CardContent } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
 import {
   FileText,
   Upload,
   Search,
   Grid3X3,
   List,
-  Star,
-  Share2,
-  MoreVertical,
   FolderOpen,
   Mic,
-  MicOff,
-  Download,
   Edit3,
-  Trash2,
-  Move,
   Eye,
-  Calendar,
-  Folder,
-  X,
-  Check,
-  Tag,
-  StickyNote,
-  Brain,
-  FileDown,
   Plus,
   ChevronDown,
+  Star,
+  Tag,
+  MoreHorizontal,
+  FileImage,
+  FileSpreadsheet,
+  File,
+  X,
+  Check,
 } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import PageWrapper from "@/components/page-wrapper"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu" // Added DropdownMenu components
+import { DocumentViewerModal } from "@/components/document-viewer-modal" // Added DocumentViewerModal
 
 interface Document {
   id: string
@@ -62,7 +48,96 @@ interface Document {
   tags: string[]
   content?: string
   notes?: string
+  source?: string
+  isImportant?: boolean
 }
+
+const sampleDocuments: Document[] = [
+  {
+    id: "1",
+    name: "Blood Test Results - CBC Panel",
+    type: "application/pdf",
+    size: 245760,
+    uploadDate: "2024-01-15T10:30:00Z",
+    category: "labs",
+    folder: "labs",
+    childId: "child-1",
+    favorite: false,
+    tags: ["Lab", "CBC", "Routine"],
+    source: "Children's Hospital",
+    isImportant: true,
+  },
+  {
+    id: "2",
+    name: "Pediatric Growth Chart",
+    type: "image/png",
+    size: 156432,
+    uploadDate: "2024-01-12T14:20:00Z",
+    category: "reports",
+    folder: "reports",
+    childId: "child-1",
+    favorite: true,
+    tags: ["Report", "Growth", "Pediatric"],
+    source: "Patient Portal",
+    isImportant: false,
+  },
+  {
+    id: "3",
+    name: "Amoxicillin Prescription",
+    type: "application/pdf",
+    size: 89234,
+    uploadDate: "2024-01-10T09:15:00Z",
+    category: "prescriptions",
+    folder: "prescriptions",
+    childId: "child-1",
+    favorite: false,
+    tags: ["Rx", "Antibiotic"],
+    source: "Dr. Martinez Clinic",
+    isImportant: false,
+  },
+  {
+    id: "4",
+    name: "IEP Meeting Notes",
+    type: "application/docx",
+    size: 123456,
+    uploadDate: "2024-01-08T16:45:00Z",
+    category: "school",
+    folder: "school",
+    childId: "child-1",
+    favorite: false,
+    tags: ["Report", "IEP", "Education"],
+    source: "Lincoln Elementary",
+    isImportant: true,
+  },
+  {
+    id: "5",
+    name: "Insurance Coverage Summary",
+    type: "application/pdf",
+    size: 198765,
+    uploadDate: "2024-01-05T11:30:00Z",
+    category: "insurance",
+    folder: "insurance",
+    childId: "child-1",
+    favorite: false,
+    tags: ["Insurance", "Coverage"],
+    source: "BlueCross Portal",
+    isImportant: false,
+  },
+  {
+    id: "6",
+    name: "Vaccination Record",
+    type: "image/jpeg",
+    size: 234567,
+    uploadDate: "2024-01-03T13:20:00Z",
+    category: "reports",
+    folder: "reports",
+    childId: "child-1",
+    favorite: true,
+    tags: ["Report", "Vaccines", "Immunization"],
+    source: "Pediatric Clinic",
+    isImportant: true,
+  },
+]
 
 const defaultFolders = [
   { id: "all", name: "All Documents", color: "bg-gray-100 text-gray-800", count: 0, editable: false },
@@ -74,13 +149,13 @@ const defaultFolders = [
   { id: "other", name: "Other", color: "bg-gray-100 text-gray-800", count: 0, editable: true },
 ]
 
-export default function DocHubPage() {
-  const [selectedChildId, setSelectedChildId] = useState<string>("child-1")
-  const [documents, setDocuments] = useState<Document[]>([])
-  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([])
+export default function DocumentHub() {
+  const [selectedChildId, setSelectedChildId] = useState("child-1")
+  const [documents, setDocuments] = useState<Document[]>([]) // Start with empty array to show empty state
+  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]) // Start with empty array
   const [folders, setFolders] = useState(defaultFolders)
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
   const [selectedFolder, setSelectedFolder] = useState<string>("all")
   const [isUploading, setIsUploading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
@@ -89,6 +164,7 @@ export default function DocHubPage() {
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [showVoiceScribe, setShowVoiceScribe] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null)
+  const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]) // Added multi-select state
 
   const [showDocumentDetails, setShowDocumentDetails] = useState(false)
   const [showRenameFolder, setShowRenameFolder] = useState(false)
@@ -100,6 +176,8 @@ export default function DocHubPage() {
   const [newFolderName, setNewFolderName] = useState("")
   const [newTag, setNewTag] = useState("")
   const [documentNote, setDocumentNote] = useState("")
+  const [activeFilters, setActiveFilters] = useState<string[]>([])
+  const [sortBy, setSortBy] = useState("newest")
 
   const [isChildDropdownOpen, setIsChildDropdownOpen] = useState(false)
   const [selectedChild, setSelectedChild] = useState({
@@ -128,6 +206,35 @@ export default function DocHubPage() {
   ]
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [showDocumentModal, setShowDocumentModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showAnalytics, setShowAnalytics] = useState(false)
+
+  const [currentTipSlide, setCurrentTipSlide] = useState(0)
+  const [emailAddress] = useState("docs+ava@caregene.com")
+  const [copySuccess, setCopySuccess] = useState(false)
+
+  const [workbenchSelectedDoc, setWorkbenchSelectedDoc] = useState<Document | null>(null)
+  const [workbenchTab, setWorkbenchTab] = useState("summary")
+
+  // Added state for Document Viewer Modal
+  const [showDocumentViewer, setShowDocumentViewer] = useState(false)
+  const [viewerDocument, setViewerDocument] = useState<Document | null>(null)
+
+  const getFileTypeIcon = (type: string) => {
+    if (type.includes("image")) return <FileImage className="h-6 w-6" />
+    if (type.includes("spreadsheet") || type.includes("excel")) return <FileSpreadsheet className="h-6 w-6" />
+    if (type.includes("pdf") || type.includes("document")) return <FileText className="h-6 w-6" />
+    return <File className="h-6 w-6" />
+  }
+
+  const toggleDocumentSelection = (docId: string) => {
+    setSelectedDocuments((prev) => (prev.includes(docId) ? prev.filter((id) => id !== docId) : [...prev, docId]))
+  }
+
+  const toggleImportant = (docId: string) => {
+    setDocuments((prev) => prev.map((doc) => (doc.id === docId ? { ...doc, isImportant: !doc.isImportant } : doc)))
+  }
 
   const handleChildSelect = (childId: string) => {
     setSelectedChildId(childId)
@@ -135,31 +242,71 @@ export default function DocHubPage() {
     if (child) {
       setSelectedChild(child)
     }
+    setIsChildDropdownOpen(false)
   }
+
+  const copyEmailToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(emailAddress)
+      setCopySuccess(true)
+      setTimeout(() => setCopySuccess(false), 2000)
+    } catch (err) {
+      console.error("Failed to copy email:", err)
+    }
+  }
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTipSlide((prev) => (prev + 1) % 2)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     const loadDocuments = () => {
       try {
-        const allDocuments = JSON.parse(localStorage.getItem("caregene-documents") || "[]")
+        const allDocuments = documents
         const childDocuments = selectedChildId
           ? allDocuments.filter((doc: Document) => doc.childId === selectedChildId)
           : allDocuments
-        setDocuments(allDocuments)
 
         // Apply filters and search
         let filtered = childDocuments
         if (selectedFolder !== "all") {
           filtered = filtered.filter((doc: Document) => doc.folder === selectedFolder)
         }
-        if (searchQuery) {
+        if (searchTerm) {
           filtered = filtered.filter(
             (doc: Document) =>
-              doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              doc.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              doc.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
-              doc.notes?.toLowerCase().includes(searchQuery.toLowerCase()),
+              doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              doc.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              doc.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase())) ||
+              doc.notes?.toLowerCase().includes(searchTerm.toLowerCase()),
           )
         }
+        if (activeFilters.includes("Type")) {
+          filtered = filtered.filter((doc: Document) => doc.type !== "application/octet-stream")
+        }
+        if (activeFilters.includes("Date")) {
+          filtered = filtered.filter((doc: Document) => doc.uploadDate !== "")
+        }
+        if (activeFilters.includes("Status")) {
+          filtered = filtered.filter((doc: Document) => doc.favorite !== false)
+        }
+
+        filtered.sort((a, b) => {
+          switch (sortBy) {
+            case "oldest":
+              return new Date(a.uploadDate).getTime() - new Date(b.uploadDate).getTime()
+            case "name":
+              return a.name.localeCompare(b.name)
+            case "size":
+              return b.size - a.size
+            default: // newest
+              return new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
+          }
+        })
+
         setFilteredDocuments(filtered)
       } catch (error) {
         console.error("Error loading documents:", error)
@@ -169,7 +316,7 @@ export default function DocHubPage() {
     }
 
     loadDocuments()
-  }, [selectedChildId, selectedFolder, searchQuery])
+  }, [selectedChildId, selectedFolder, searchTerm, activeFilters, sortBy, documents])
 
   useEffect(() => {
     const savedFolders = localStorage.getItem("caregene-folders")
@@ -230,7 +377,7 @@ export default function DocHubPage() {
         childId: selectedChildId,
         favorite: false,
         tags: [],
-        aiSummary: "AI summary will be generated shortly...",
+        aiSummary: "Document summary will be available shortly...",
         notes: "",
       }
       newDocuments.push(doc)
@@ -251,7 +398,7 @@ export default function DocHubPage() {
       setIsRecording(false)
       // In a real app, you'd stop recording and process the audio
       setVoiceNote(
-        "Doctor visit notes: Patient showed improvement in motor skills. Recommended continued therapy sessions twice weekly.",
+        "Dr. Martinez said Emma's doing great with her physical therapy. She wants us to keep doing the exercises at home, especially the balance ones. Next appointment is in 3 weeks.",
       )
     } else {
       setIsRecording(true)
@@ -264,7 +411,7 @@ export default function DocHubPage() {
 
     const doc: Document = {
       id: Date.now().toString(),
-      name: `Voice Note - ${new Date().toLocaleDateString()}`,
+      name: `Visit Notes - ${new Date().toLocaleDateString()}`,
       type: "text/plain",
       size: voiceNote.length,
       uploadDate: new Date().toISOString(),
@@ -272,9 +419,9 @@ export default function DocHubPage() {
       folder: "other",
       childId: selectedChildId,
       favorite: false,
-      tags: ["voice-note", "doctor-visit"],
+      tags: ["visit-notes", "doctor"],
       content: voiceNote,
-      aiSummary: "Voice note from doctor visit",
+      aiSummary: "Notes from doctor visit",
       notes: "",
     }
 
@@ -288,7 +435,7 @@ export default function DocHubPage() {
 
   const toggleFavorite = (docId: string) => {
     const updatedDocs = documents.map((doc) => (doc.id === docId ? { ...doc, favorite: !doc.favorite } : doc))
-    localStorage.setItem("caregene-documents", JSON.stringify(updatedDocs))
+    localStorage.setItem("caregene-documents", JSON.JSON.stringify(updatedDocs))
     setDocuments(updatedDocs)
   }
 
@@ -342,6 +489,7 @@ export default function DocHubPage() {
     const updatedDocs = documents.map((doc) => (doc.id === selectedDocument.id ? { ...doc, tags: updatedTags } : doc))
     localStorage.setItem("caregene-documents", JSON.stringify(updatedDocs))
     setDocuments(updatedDocs)
+    setSelectedDocument({ ...selectedDocument, tags: updatedTags })
     setNewTag("")
   }
 
@@ -350,6 +498,7 @@ export default function DocHubPage() {
 
     const updatedTags = selectedDocument.tags.filter((tag) => tag !== tagToRemove)
     const updatedDocs = documents.map((doc) => (doc.id === selectedDocument.id ? { ...doc, tags: updatedTags } : doc))
+    // </CHANGE> Fixed JSON.JSON.stringify to JSON.stringify
     localStorage.setItem("caregene-documents", JSON.stringify(updatedDocs))
     setDocuments(updatedDocs)
     setSelectedDocument({ ...selectedDocument, tags: updatedTags })
@@ -361,14 +510,20 @@ export default function DocHubPage() {
     const updatedDocs = documents.map((doc) => (doc.id === selectedDocument.id ? { ...doc, notes: documentNote } : doc))
     localStorage.setItem("caregene-documents", JSON.stringify(updatedDocs))
     setDocuments(updatedDocs)
+    setSelectedDocument({ ...selectedDocument, notes: documentNote })
     setShowAddNote(false)
     setDocumentNote("")
-    setSelectedDocument(null)
   }
 
   const viewDocumentDetails = (doc: Document) => {
     setSelectedDocument(doc)
     setShowDocumentDetails(true)
+  }
+
+  const handleDeleteDocument = (docId: string) => {
+    const updatedDocs = documents.filter((doc) => doc.id !== docId)
+    localStorage.setItem("caregene-documents", JSON.stringify(updatedDocs))
+    setDocuments(updatedDocs)
   }
 
   const folderCounts = folders.map((folder) => ({
@@ -381,727 +536,1090 @@ export default function DocHubPage() {
 
   const totalDocuments = documents.filter((doc) => (selectedChildId ? doc.childId === selectedChildId : true)).length
 
-  const recentUploads = documents
+  const recentDocuments = documents
     .filter((doc) => (selectedChildId ? doc.childId === selectedChildId : true))
     .sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime())
     .slice(0, 3)
 
-  return (
-    <PageWrapper>
-      <div className="min-h-screen bg-background">
-        {/* Patient Header - matching health plan implementation */}
-        <div className="bg-card border-b border-border px-4 sm:px-6 py-2">
-          <div className="flex items-center gap-4">
-            <img
-              src={selectedChild.avatar || "/placeholder.svg"}
-              alt={selectedChild.firstName}
-              className="w-10 h-10 rounded-full object-cover border border-border"
-            />
-            <div>
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <div
-                    onMouseEnter={() => setIsChildDropdownOpen(true)}
-                    onMouseLeave={() => setIsChildDropdownOpen(false)}
-                  >
-                    <div
-                      className="flex items-center gap-1 cursor-pointer"
-                      onClick={() => setIsChildDropdownOpen(!isChildDropdownOpen)}
-                    >
-                      <h1 className="text-base sm:text-lg md:text-xl font-semibold text-foreground">
-                        {selectedChild.firstName}
-                      </h1>
-                      <button className="p-1 hover:bg-muted rounded-sm transition-colors">
-                        <ChevronDown className="h-3 w-3" />
-                      </button>
-                    </div>
+  const unfiledCount = documents.filter(
+    (doc) => (selectedChildId ? doc.childId === selectedChildId : true) && (!doc.folder || doc.folder === "other"),
+  ).length
 
-                    {isChildDropdownOpen && (
-                      <div className="absolute top-full left-0 mt-1 bg-background border border-border rounded-md shadow-lg z-[100] min-w-[200px]">
-                        <div className="py-1">
-                          {children.map((child) => (
-                            <div
-                              key={child.id}
-                              className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer rounded-lg transition-colors"
-                              onClick={() => {
-                                setSelectedChild(child)
-                                setIsChildDropdownOpen(false)
-                              }}
-                            >
-                              <img
-                                src={child.avatar || "/placeholder.svg"}
-                                alt={child.name}
-                                className="w-8 h-8 rounded-full object-cover"
-                              />
-                              <div>
-                                <div className="text-sm sm:text-base font-medium text-gray-900">{child.firstName}</div>
-                                <div className="text-xs sm:text-sm text-gray-500">Age {child.age}</div>
-                              </div>
-                            </div>
-                          ))}
-                          <div className="border-t border-border mt-1 pt-1">
-                            <button className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-muted transition-colors text-xs sm:text-sm">
-                              <Plus className="w-4 h-4" />
-                              <span>Manage Child</span>
-                            </button>
-                          </div>
+  const needsReviewCount = documents.filter(
+    (doc) => (selectedChildId ? doc.childId === selectedChildId : true) && doc.tags?.includes("needs-review"),
+  ).length
+
+  const readyForVisitCount = documents.filter(
+    (doc) => (selectedChildId ? doc.childId === selectedChildId : true) && doc.tags?.includes("visit-ready"),
+  ).length
+
+  const [isRightWorkbenchOpen, setIsRightWorkbenchOpen] = useState(true)
+  const [isMobileFoldersOpen, setIsMobileFoldersOpen] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        // lg breakpoint
+        setIsRightWorkbenchOpen(false)
+      } else {
+        setIsRightWorkbenchOpen(true)
+      }
+    }
+
+    handleResize() // Set initial state
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
+
+  const toggleFilter = (filter: string) => {
+    setActiveFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]))
+  }
+
+  const selectDocumentForWorkbench = (doc: Document) => {
+    setWorkbenchSelectedDoc(doc)
+  }
+
+  const suggestedTags = [
+    "Lab Results",
+    "Prescription",
+    "Report",
+    "Urgent",
+    "Follow-up",
+    "Insurance",
+    "School",
+    "Therapy",
+    "Vaccination",
+    "Allergy",
+    "Emergency",
+    "Routine",
+    "Specialist",
+    "Primary Care",
+  ]
+
+  // Added function to open the document viewer
+  const openDocumentViewer = (doc: Document) => {
+    setViewerDocument(doc)
+    setShowDocumentViewer(true)
+  }
+
+  // Added function for sharing documents
+  const handleShareDocument = async (doc: Document) => {
+    try {
+      const response = await fetch(`/api/documents/${doc.id}/share`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: "shared@example.com", // This would come from a form
+          permission: "view",
+          expiresIn: 7,
+        }),
+      })
+
+      if (response.ok) {
+        const { shareUrl } = await response.json()
+        console.log("Document shared:", shareUrl)
+        // Show success message or copy to clipboard
+      }
+    } catch (error) {
+      console.error("Error sharing document:", error)
+    }
+  }
+
+  return (
+    <PageWrapper showChildSelector={true}>
+      <div className="min-h-screen bg-background" id="dochub">
+        {/* Document Workspace Hero Band */}
+        <div className="px-3 sm:px-6 lg:px-8 xl:px-12 py-2">
+          <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 shadow-sm rounded-xl">
+            <CardContent className="p-3 sm:p-4 lg:p-6">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 lg:gap-6">
+                {/* Left side - Title, subtitle, and buttons */}
+                <div className="flex-1 w-full">
+                  <div className="mb-3">
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">DocHub</h2>
+                    <p className="text-sm sm:text-base lg:text-lg text-gray-700">
+                      A smart workspace for medical documents
+                    </p>
+                  </div>
+
+                  <div className="mb-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+                      <div className="flex items-center gap-2 text-blue-700">
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+                          <svg
+                            className="h-2.5 w-2.5 sm:h-3 sm:w-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                            />
+                          </svg>
                         </div>
+                        <span className="font-medium">Smart AI extraction</span>
                       </div>
-                    )}
+                      <span className="text-gray-400 hidden sm:inline">•</span>
+                      <div className="flex items-center gap-2 text-green-700">
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                          <svg
+                            className="h-2.5 w-2.5 sm:h-3 sm:w-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 10V3L4 14h7v7l9-11h-7z"
+                            />
+                          </svg>
+                        </div>
+                        <span className="font-medium">Visit-ready packets</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    <Button
+                      size="default"
+                      className="bg-blue-600 hover:bg-blue-700 px-4 sm:px-6 text-white text-sm sm:text-base"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={!selectedChildId}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Add Document
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="default"
+                      onClick={() => setShowVoiceScribe(true)}
+                      disabled={!selectedChildId}
+                      className="border-blue-200 text-blue-700 hover:bg-blue-50 text-sm sm:text-base"
+                    >
+                      <Mic className="h-4 w-4 mr-2" />
+                      Quick Note
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Right side - KPI chips - Made responsive and mobile-friendly */}
+                <div className="w-full lg:w-auto">
+                  <div className="bg-white/90 backdrop-blur-sm border border-white/30 rounded-2xl p-4 sm:p-6 shadow-lg">
+                    <div className="grid grid-cols-4 gap-2 sm:gap-4">
+                      {/* Total Documents */}
+                      <div className="text-center">
+                        <div className="text-lg sm:text-2xl font-bold text-gray-900 mb-1">
+                          {documents.filter((doc) => (selectedChildId ? doc.childId === selectedChildId : true)).length}
+                        </div>
+                        <div className="text-xs font-medium text-gray-600">Total</div>
+                      </div>
+
+                      {/* Important Documents */}
+                      <div className="text-center">
+                        <div className="text-lg sm:text-2xl font-bold text-blue-600 mb-1">
+                          {
+                            documents.filter(
+                              (doc) => (selectedChildId ? doc.childId === selectedChildId : true) && doc.isImportant,
+                            ).length
+                          }
+                        </div>
+                        <div className="text-xs font-medium text-blue-600">Important</div>
+                      </div>
+
+                      {/* Tagged Documents */}
+                      <div className="text-center">
+                        <div className="text-lg sm:text-2xl font-bold text-gray-900 mb-1">
+                          {
+                            documents.filter(
+                              (doc) =>
+                                (selectedChildId ? doc.childId === selectedChildId : true) &&
+                                doc.tags &&
+                                doc.tags.length > 0,
+                            ).length
+                          }
+                        </div>
+                        <div className="text-xs font-medium text-gray-600">Tagged</div>
+                      </div>
+
+                      {/* This Week */}
+                      <div className="text-center">
+                        <div className="text-lg sm:text-2xl font-bold text-gray-900 mb-1">
+                          {
+                            documents.filter((doc) => {
+                              if (selectedChildId && doc.childId !== selectedChildId) return false
+                              const docDate = new Date(doc.uploadDate)
+                              const weekAgo = new Date()
+                              weekAgo.setDate(weekAgo.getDate() - 7)
+                              return docDate >= weekAgo
+                            }).length
+                          }
+                        </div>
+                        <div className="text-xs font-medium text-gray-600">This Week</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-              <p className="text-xs sm:text-sm text-muted-foreground">Age {selectedChild.age}</p>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="px-4 py-6 max-w-7xl mx-auto">
-          <div className="mb-8">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Document Hub</h1>
-                <p className="text-gray-600">Secure vault for all your child's health documents</p>
-              </div>
+        <div className="px-3 sm:px-6 lg:px-8 xl:px-12 py-4">
+          {/* Search and Filter Controls */}
+          <div className="mb-6">
+            <div className="lg:hidden mb-4">
+              {/* Primary folder selector button */}
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full justify-between h-12 mb-3 bg-muted/30 border-border hover:bg-muted/50"
+                onClick={() => setIsMobileFoldersOpen(true)}
+              >
+                <div className="flex items-center gap-3">
+                  <FolderOpen className="h-5 w-5" />
+                  <span className="font-medium text-sm sm:text-base">
+                    {folderCounts.find((f) => f.id === selectedFolder)?.name || "All Documents"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs sm:text-sm">
+                    {folderCounts.find((f) => f.id === selectedFolder)?.count || 0}
+                  </Badge>
+                  <ChevronDown className="h-4 w-4" />
+                </div>
+              </Button>
 
-              {/* Primary Upload CTA */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  size="lg"
-                  className="bg-primary hover:bg-primary/90 text-white px-6 py-3 text-base font-semibold shadow-lg"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={!selectedChildId}
-                >
-                  <Upload className="h-5 w-5 mr-2" />
-                  Upload Documents
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => setShowVoiceScribe(true)}
-                  disabled={!selectedChildId}
-                  className="px-6 py-3"
-                >
-                  <Mic className="h-5 w-5 mr-2" />
-                  Voice Scribe
-                </Button>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {folderCounts.slice(1, 5).map((folder) => (
+                  <button
+                    key={folder.id}
+                    onClick={() => setSelectedFolder(folder.id)}
+                    className={`flex flex-col items-center justify-center gap-1 p-2 sm:p-3 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                      selectedFolder === folder.id
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted/50 text-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    <span className="truncate text-center leading-tight">{folder.name}</span>
+                    {folder.count > 0 && (
+                      <Badge
+                        variant="secondary"
+                        className={`text-xs ${
+                          selectedFolder === folder.id ? "bg-primary-foreground/20 text-primary-foreground" : ""
+                        }`}
+                      >
+                        {folder.count}
+                      </Badge>
+                    )}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Dashboard Metrics */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <Card className="border-gray-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <FileText className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-gray-900">{totalDocuments}</p>
-                      <p className="text-sm text-gray-600">Total Documents</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="flex flex-col gap-4">
+              {/* Search input - full width on mobile */}
+              <div className="relative w-full">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-500" />
+                <Input
+                  placeholder="Search by title or content…"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-12 h-12 rounded-lg text-base bg-background border-border w-full"
+                />
+              </div>
 
-              <Card className="border-gray-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <Folder className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-gray-900">
-                        {folderCounts.filter((f) => f.count > 0).length - 1}
-                      </p>
-                      <p className="text-sm text-gray-600">Active Folders</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Controls row - responsive layout */}
+              <div className="flex items-center justify-between gap-4">
+                {/* Grid/List segmented control */}
+                <div className="flex bg-gray-50/50 p-1 rounded-2xl">
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 ease-out ${
+                      viewMode === "grid"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-gray-600 hover:bg-gray-200/80 hover:text-gray-900"
+                    }`}
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 ease-out ${
+                      viewMode === "list"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-gray-600 hover:bg-gray-200/80 hover:text-gray-900"
+                    }`}
+                  >
+                    <List className="h-4 w-4" />
+                  </button>
+                </div>
 
-              <Card className="border-gray-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <Calendar className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-gray-900">{recentUploads.length}</p>
-                      <p className="text-sm text-gray-600">Recent Uploads</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-gray-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-orange-100 rounded-lg">
-                      <Star className="h-5 w-5 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-gray-900">
-                        {
-                          documents.filter(
-                            (doc) => doc.favorite && (selectedChildId ? doc.childId === selectedChildId : true),
-                          ).length
-                        }
-                      </p>
-                      <p className="text-sm text-gray-600">Favorites</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                {/* Sort dropdown */}
+                <div className="relative">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="bg-gray-50/50 border-gray-200 hover:bg-gray-100/80 px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 gap-3 min-w-[140px] justify-between"
+                      >
+                        <span>
+                          {sortBy === "newest" && "Newest First"}
+                          {sortBy === "oldest" && "Oldest First"}
+                          {sortBy === "name" && "Name A-Z"}
+                          {sortBy === "size" && "Size"}
+                        </span>
+                        <ChevronDown className="h-4 w-4 text-gray-500" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-[140px]">
+                      <DropdownMenuItem
+                        onClick={() => setSortBy("newest")}
+                        className="flex items-center justify-between"
+                      >
+                        <span>Newest First</span>
+                        {sortBy === "newest" && <Check className="h-4 w-4" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setSortBy("oldest")}
+                        className="flex items-center justify-between"
+                      >
+                        <span>Oldest First</span>
+                        {sortBy === "oldest" && <Check className="h-4 w-4" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortBy("name")} className="flex items-center justify-between">
+                        <span>Name A-Z</span>
+                        {sortBy === "name" && <Check className="h-4 w-4" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortBy("size")} className="flex items-center justify-between">
+                        <span>Size</span>
+                        {sortBy === "size" && <Check className="h-4 w-4" />}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Sidebar with folders */}
-            <div className="lg:w-64 space-y-4">
-              <Card className="border-gray-200">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Folders</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {folderCounts.map((folder) => (
-                    <div key={folder.id} className="flex items-center gap-2">
-                      <button
-                        onClick={() => setSelectedFolder(folder.id)}
-                        className={`flex-1 flex items-center justify-between p-3 rounded-lg text-left transition-colors ${
-                          selectedFolder === folder.id
-                            ? "bg-primary/10 border border-primary/20"
-                            : "hover:bg-gray-50 border border-transparent"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <FolderOpen className="h-4 w-4 text-gray-500" />
-                          <span className="font-medium text-gray-900">{folder.name}</span>
-                        </div>
-                        <Badge className={folder.color}>{folder.count}</Badge>
-                      </button>
-                      {folder.editable && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedFolderToRename(folder.id)
-                            setNewFolderName(folder.name)
-                            setShowRenameFolder(true)
-                          }}
-                        >
-                          <Edit3 className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6">
+            {/* Column 1: Compact Folders - Hidden on mobile, shown on lg+ */}
+            <div className="hidden lg:block lg:col-span-1">
+              <div className="bg-card border border-border rounded-xl shadow-sm h-[600px] overflow-y-auto">
+                {/* Folders Section */}
+                <div className="p-4 border-b border-border">
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Folders</h3>
 
-            {/* Main content area */}
-            <div className="flex-1">
-              {/* Search and view controls */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search documents..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
+                  <div className="space-y-1">
+                    {folderCounts.map((folder) => (
+                      <div key={folder.id} className="group flex items-center gap-1">
+                        <button
+                          onClick={() => setSelectedFolder(folder.id)}
+                          className={`flex-1 flex items-center justify-between p-2 rounded-md text-left transition-all text-sm ${
+                            selectedFolder === folder.id
+                              ? "bg-primary text-primary-foreground"
+                              : "hover:bg-muted text-foreground"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <FolderOpen className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span className="font-medium truncate text-xs">{folder.name}</span>
+                          </div>
+                          <Badge
+                            variant="secondary"
+                            className={`text-xs px-1.5 py-0.5 flex-shrink-0 ${
+                              selectedFolder === folder.id ? "bg-primary-foreground/20 text-primary-foreground" : ""
+                            }`}
+                          >
+                            {folder.count}
+                          </Badge>
+                        </button>
+                        {folder.editable && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedFolderToRename(folder.id)
+                              setNewFolderName(folder.name)
+                              setShowRenameFolder(true)
+                            }}
+                            className="p-1 h-6 w-6 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Edit3 className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <button className="w-full flex items-center gap-2 p-2 mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>New Folder</span>
+                  </button>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant={viewMode === "grid" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode("grid")}
-                  >
-                    <Grid3X3 className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === "list" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode("list")}
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
+
+                {/* Smart Folders Section */}
+                <div className="p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Smart Folders</h3>
+                  <div className="space-y-1">
+                    {[
+                      { id: "important", name: "Important", icon: "⭐", count: 0 },
+                      { id: "this-month", name: "This Month", icon: "📅", count: 0 },
+                      { id: "from-portal", name: "From Portal", icon: "🏥", count: 0 },
+                    ].map((smartFolder) => (
+                      <button
+                        key={smartFolder.id}
+                        onClick={() => {
+                          setSelectedFolder("all")
+                          setSearchTerm("")
+                        }}
+                        className="w-full flex items-center justify-between p-2 rounded-md text-left transition-all bg-muted/50 hover:bg-muted border-border text-foreground text-sm"
+                      >
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="text-sm flex-shrink-0">{smartFolder.icon}</span>
+                          <span className="font-medium truncate text-xs">{smartFolder.name}</span>
+                        </div>
+                        <Badge variant="secondary" className="text-xs px-1.5 py-0.5 flex-shrink-0">
+                          {smartFolder.count}
+                        </Badge>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
+            </div>
 
-              <div
-                className={`min-h-96 border-2 border-dashed rounded-xl p-6 transition-colors ${
-                  dragActive ? "border-primary bg-primary/5" : "border-gray-200 hover:border-gray-300"
-                }`}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-              >
-                {filteredDocuments.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                      <FileText className="h-12 w-12 text-gray-400" />
+            {/* Column 2-5: Main Content - Full width on mobile, 4 columns on lg+ */}
+            <div className="lg:col-span-4">
+              {filteredDocuments.length === 0 ? (
+                <Card className="border-dashed border-2 border-border bg-card/50 h-[500px] sm:h-[600px]">
+                  <CardContent className="p-6 sm:p-12 text-center flex flex-col justify-center h-full">
+                    {/* Illustration */}
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-blue-100 to-sky-100 rounded-full mx-auto mb-6 sm:mb-8 flex items-center justify-center">
+                      <div className="w-18 h-18 sm:w-24 sm:h-24 bg-white rounded-full flex items-center justify-center shadow-sm">
+                        <FileText className="h-8 w-8 sm:h-12 sm:w-12 text-blue-600" />
+                      </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {selectedChildId ? "No documents yet" : "Select a child to view documents"}
+
+                    <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 sm:mb-4">
+                      Welcome to {selectedChild.firstName}'s DocHub
                     </h3>
-                    <p className="text-gray-600 mb-6">
-                      {selectedChildId
-                        ? "Upload your first document or drag and drop files here"
-                        : "Choose a child from the dropdown above to manage their documents"}
+                    <p className="text-muted-foreground mb-8 sm:mb-10 text-base sm:text-lg max-w-md mx-auto leading-relaxed">
+                      Your smart workspace for organizing and managing medical documents
                     </p>
-                    {selectedChildId && (
-                      <Button onClick={() => fileInputRef.current?.click()}>
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Your First Document
+
+                    {/* Actions */}
+                    <div className="space-y-4 sm:space-y-6 mb-8 sm:mb-10">
+                      {/* Upload/Scan - Primary Button */}
+                      <Button
+                        size="lg"
+                        className="w-full max-w-sm mx-auto h-12 sm:h-14 text-base sm:text-lg bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={!selectedChildId}
+                      >
+                        <Upload className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
+                        Upload or Scan Document
                       </Button>
-                    )}
-                  </div>
-                ) : (
-                  <div
-                    className={
-                      viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"
-                    }
-                  >
-                    {filteredDocuments.map((doc) => (
-                      <Card key={doc.id} className="border-gray-200 hover:shadow-md transition-shadow">
-                        <CardContent className={viewMode === "grid" ? "p-4" : "p-4"}>
-                          <div
-                            className={`flex ${viewMode === "grid" ? "flex-col" : "items-center justify-between"} gap-3`}
-                          >
-                            <div
-                              className={`flex ${viewMode === "grid" ? "flex-col" : "items-center"} gap-3 ${viewMode === "list" ? "flex-1" : ""}`}
-                            >
-                              <div className={`flex items-center gap-3 ${viewMode === "grid" ? "w-full" : ""}`}>
-                                <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
-                                  <FileText className="h-4 w-4 text-blue-600" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <h4 className="font-semibold text-gray-900 truncate">{doc.name}</h4>
-                                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <span>{new Date(doc.uploadDate).toLocaleDateString()}</span>
-                                    <span>•</span>
-                                    <span>{(doc.size / 1024).toFixed(1)} KB</span>
-                                    {doc.favorite && <Star className="h-3 w-3 text-yellow-500 fill-current" />}
-                                    {doc.notes && <StickyNote className="h-3 w-3 text-blue-500" />}
-                                    {doc.tags.length > 0 && <Tag className="h-3 w-3 text-green-500" />}
-                                  </div>
-                                </div>
-                              </div>
 
-                              {viewMode === "grid" && doc.aiSummary && (
-                                <p className="text-sm text-gray-600 line-clamp-2">{doc.aiSummary}</p>
-                              )}
-
-                              {doc.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                  {doc.tags.slice(0, 3).map((tag) => (
-                                    <Badge key={tag} variant="secondary" className="text-xs">
-                                      {tag}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              )}
+                      {/* Create Folder */}
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="w-full max-w-sm mx-auto h-10 sm:h-12 text-sm sm:text-base border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 rounded-xl bg-transparent"
+                      >
+                        <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                        Create Folder
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  {viewMode === "grid" ? (
+                    /* Improved responsive grid for documents */
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-4 sm:gap-6">
+                      {filteredDocuments.map((doc) => (
+                        <Card
+                          key={doc.id}
+                          className="group hover:shadow-lg transition-all duration-200 border border-border"
+                        >
+                          <CardContent className="p-4 sm:p-6">
+                            {/* Card Header with checkbox and star */}
+                            <div className="flex items-start justify-between mb-4">
+                              <Checkbox
+                                checked={selectedDocuments.includes(doc.id)}
+                                onCheckedChange={() => toggleDocumentSelection(doc.id)}
+                                className="mt-1"
+                              />
+                              <button
+                                onClick={() => toggleImportant(doc.id)}
+                                className={`p-1 rounded-full transition-colors ${
+                                  doc.isImportant
+                                    ? "text-yellow-500 hover:text-yellow-600"
+                                    : "text-gray-300 hover:text-yellow-500"
+                                }`}
+                              >
+                                <Star className={`h-4 w-4 ${doc.isImportant ? "fill-current" : ""}`} />
+                              </button>
                             </div>
 
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="flex-shrink-0">
-                                  <MoreVertical className="h-4 w-4" />
+                            {/* File icon and title */}
+                            <div className="flex items-start gap-3 sm:gap-4 mb-4">
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 text-primary rounded-lg flex items-center justify-center flex-shrink-0">
+                                {getFileTypeIcon(doc.type)}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold text-foreground text-sm leading-tight mb-2 line-clamp-2">
+                                  {doc.name}
+                                </h3>
+                                <div className="space-y-1">
+                                  <p className="text-xs text-muted-foreground">
+                                    {new Date(doc.uploadDate).toLocaleDateString()}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground font-medium">{doc.source}</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* AI Summary section with distinctive AI border */}
+                            {doc.aiSummary && (
+                              <div className="mb-4 p-4 rounded-lg border-2 border-transparent bg-gradient-to-r from-blue-50 via-purple-50 to-blue-50 relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 opacity-20 animate-pulse"></div>
+                                <div className="relative">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                                      <svg
+                                        className="h-3 w-3 text-white"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                                        />
+                                      </svg>
+                                    </div>
+                                    <span className="text-xs font-bold text-blue-700">AI Summary</span>
+                                    <div className="flex gap-1 ml-auto">
+                                      <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse"></div>
+                                      <div
+                                        className="w-1 h-1 bg-purple-500 rounded-full animate-pulse"
+                                        style={{ animationDelay: "0.2s" }}
+                                      ></div>
+                                      <div
+                                        className="w-1 h-1 bg-blue-500 rounded-full animate-pulse"
+                                        style={{ animationDelay: "0.4s" }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                  <p className="text-xs text-gray-700 leading-relaxed">{doc.aiSummary}</p>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* comment section */}
+                            {doc.notes && (
+                              <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Edit3 className="h-4 w-4 text-gray-600" />
+                                  <span className="text-xs font-medium text-gray-700">Your Notes</span>
+                                </div>
+                                <p className="text-xs text-gray-600 leading-relaxed">{doc.notes}</p>
+                              </div>
+                            )}
+
+                            {/* Tags */}
+                            {doc.tags && doc.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mb-4">
+                                {doc.tags.slice(0, 3).map((tag, index) => (
+                                  <Badge key={index} variant="secondary" className="text-xs px-2 py-0.5">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                                {doc.tags.length > 3 && (
+                                  <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                                    +{doc.tags.length - 3}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+
+                            <div className="flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="p-2 h-8 w-8 text-muted-foreground hover:text-blue-600"
+                                  title="View AI Summary"
+                                  onClick={() => {
+                                    // Toggle AI summary visibility or show in modal
+                                    console.log("View AI Summary for", doc.name)
+                                  }}
+                                >
+                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                                    />
+                                  </svg>
                                 </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => viewDocumentDetails(doc)}>
-                                  <Brain className="h-4 w-4 mr-2" />
-                                  View AI Summary
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Download className="h-4 w-4 mr-2" />
-                                  Download
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => exportDocument(doc)}>
-                                  <FileDown className="h-4 w-4 mr-2" />
-                                  Export
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => toggleFavorite(doc.id)}>
-                                  <Star
-                                    className={`h-4 w-4 mr-2 ${doc.favorite ? "text-yellow-500 fill-current" : ""}`}
-                                  />
-                                  {doc.favorite ? "Remove from Favorites" : "Add to Favorites"}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Share2 className="h-4 w-4 mr-2" />
-                                  Share
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                  <Edit3 className="h-4 w-4 mr-2" />
-                                  Rename
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setSelectedDocument(doc)
-                                    setShowMoveDocument(true)
-                                  }}
-                                >
-                                  <Move className="h-4 w-4 mr-2" />
-                                  Move to Folder
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setSelectedDocument(doc)
-                                    setShowTagDocument(true)
-                                  }}
-                                >
-                                  <Tag className="h-4 w-4 mr-2" />
-                                  Manage Tags
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="p-2 h-8 w-8 text-muted-foreground hover:text-green-600"
+                                  title="Add/Edit Comment"
                                   onClick={() => {
                                     setSelectedDocument(doc)
                                     setDocumentNote(doc.notes || "")
                                     setShowAddNote(true)
                                   }}
                                 >
-                                  <StickyNote className="h-4 w-4 mr-2" />
-                                  {doc.notes ? "Edit Note" : "Add Note"}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-red-600" onClick={() => deleteDocument(doc.id)}>
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </CardContent>
-                      </Card>
+                                  <Edit3 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="p-2 h-8 w-8 text-muted-foreground hover:text-foreground"
+                                  title="Preview"
+                                  onClick={() => openDocumentViewer(doc)} // Updated to use new viewer
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="p-2 h-8 w-8 text-muted-foreground hover:text-foreground"
+                                  title="Add Tags"
+                                  onClick={() => {
+                                    setSelectedDocument(doc)
+                                    setShowTagDocument(true)
+                                  }}
+                                >
+                                  <Tag className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="p-2 h-8 w-8 text-muted-foreground hover:text-foreground"
+                                  title="More"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    /* List View - Improved mobile list view */
+                    <div className="space-y-2">
+                      {filteredDocuments.map((doc) => (
+                        <Card
+                          key={doc.id}
+                          className="group hover:shadow-md transition-all duration-200 border border-border"
+                        >
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex items-center gap-3 sm:gap-4">
+                              {/* Checkbox */}
+                              <Checkbox
+                                checked={selectedDocuments.includes(doc.id)}
+                                onCheckedChange={() => toggleDocumentSelection(doc.id)}
+                              />
+
+                              {/* File icon */}
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center flex-shrink-0">
+                                {getFileTypeIcon(doc.type)}
+                              </div>
+
+                              {/* Document info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                                  <div className="min-w-0 flex-1">
+                                    <h3 className="font-semibold text-foreground text-sm mb-1 truncate">{doc.name}</h3>
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs text-muted-foreground">
+                                      <span>{new Date(doc.uploadDate).toLocaleDateString()}</span>
+                                      <span className="font-medium">{doc.source}</span>
+                                    </div>
+
+                                    {/* AI Summary and notes in list view */}
+                                    {doc.aiSummary && (
+                                      <div className="mt-2 p-2 bg-gradient-to-r from-blue-50 to-purple-50 rounded border border-blue-200">
+                                        <div className="flex items-center gap-1 mb-1">
+                                          <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                                          <span className="text-xs font-medium text-blue-700">AI Summary</span>
+                                        </div>
+                                        <p className="text-xs text-gray-600 line-clamp-2">{doc.aiSummary}</p>
+                                      </div>
+                                    )}
+
+                                    {doc.notes && (
+                                      <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-200">
+                                        <div className="flex items-center gap-1 mb-1">
+                                          <Edit3 className="h-3 w-3 text-gray-600" />
+                                          <span className="text-xs font-medium text-gray-700">Notes</span>
+                                        </div>
+                                        <p className="text-xs text-gray-600 line-clamp-2">{doc.notes}</p>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Tags and actions - Improved mobile layout */}
+                                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                                    {/* Tags */}
+                                    {doc.tags && doc.tags.length > 0 && (
+                                      <div className="flex flex-wrap gap-1">
+                                        {doc.tags.slice(0, 2).map((tag, index) => (
+                                          <Badge key={index} variant="secondary" className="text-xs px-2 py-0.5">
+                                            {tag}
+                                          </Badge>
+                                        ))}
+                                        {doc.tags.length > 2 && (
+                                          <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                                            +{doc.tags.length - 2}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    <div className="flex items-center gap-1">
+                                      {/* Important star */}
+                                      <button
+                                        onClick={() => toggleImportant(doc.id)}
+                                        className={`p-1 rounded-full transition-colors ${
+                                          doc.isImportant
+                                            ? "text-yellow-500 hover:text-yellow-600"
+                                            : "text-gray-300 hover:text-yellow-500"
+                                        }`}
+                                      >
+                                        <Star className={`h-4 w-4 ${doc.isImportant ? "fill-current" : ""}`} />
+                                      </button>
+
+                                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="p-2 h-8 w-8 text-muted-foreground hover:text-blue-600"
+                                          title="View AI Summary"
+                                        >
+                                          <svg
+                                            className="h-4 w-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M13 10V3L4 14h7v7l9-11h-7z"
+                                            />
+                                          </svg>
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="p-2 h-8 w-8 text-muted-foreground hover:text-green-600"
+                                          title="Add/Edit Comment"
+                                          onClick={() => {
+                                            setSelectedDocument(doc)
+                                            setDocumentNote(doc.notes || "")
+                                            setShowAddNote(true)
+                                          }}
+                                        >
+                                          <Edit3 className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="p-2 h-8 w-8 text-muted-foreground hover:text-foreground"
+                                          title="Preview"
+                                          onClick={() => openDocumentViewer(doc)} // Updated to use new viewer
+                                        >
+                                          <Eye className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="p-2 h-8 w-8 text-muted-foreground hover:text-foreground"
+                                          title="Tag"
+                                          onClick={() => {
+                                            setSelectedDocument(doc)
+                                            setShowTagDocument(true)
+                                          }}
+                                        >
+                                          <Tag className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Analytics Section */}
+        {showAnalytics && selectedChildId && (
+          <div className="px-3 sm:px-6 py-4">
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+              <DocumentAnalytics documents={documents} selectedChildId={selectedChildId} />
+            </div>
+          </div>
+        )}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+
+        {showTagDocument && selectedDocument && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card border border-border rounded-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-foreground">Add Tags & Notes</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowTagDocument(false)
+                    setSelectedDocument(null)
+                    setNewTag("")
+                    setDocumentNote("")
+                  }}
+                  className="p-2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-2 truncate">{selectedDocument.name}</p>
+                </div>
+
+                {/* Tags Section */}
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Tags</label>
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {selectedDocument.tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs px-2 py-1">
+                        {tag}
+                        <button className="ml-1 hover:text-destructive" onClick={() => removeTagFromDocument(tag)}>
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
                     ))}
                   </div>
-                )}
+
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Add new tag"
+                        className="flex-1"
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault()
+                            addTagToDocument()
+                          }
+                        }}
+                      />
+                      <Button size="sm" onClick={addTagToDocument} disabled={!newTag.trim()}>
+                        Add
+                      </Button>
+                    </div>
+
+                    {/* Quick tag suggestions */}
+                    <div className="flex flex-wrap gap-1">
+                      {suggestedTags
+                        .filter(
+                          (tag) =>
+                            !selectedDocument.tags.includes(tag) &&
+                            (newTag === "" || tag.toLowerCase().includes(newTag.toLowerCase())),
+                        )
+                        .slice(0, 8)
+                        .map((tag) => (
+                          <button
+                            key={tag}
+                            onClick={() => {
+                              setNewTag(tag)
+                              setTimeout(() => addTagToDocument(), 0)
+                            }}
+                            className="text-xs px-2 py-1 bg-muted hover:bg-muted/80 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            + {tag}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notes Section */}
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Notes</label>
+                  <Textarea
+                    placeholder="Add your notes about this document..."
+                    value={documentNote || selectedDocument.notes || ""}
+                    onChange={(e) => setDocumentNote(e.target.value)}
+                    rows={4}
+                    className="resize-none"
+                  />
+
+                  {/* Note templates */}
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {[
+                      "Discussed with doctor",
+                      "Need to follow up",
+                      "Bring to next appointment",
+                      "Important for specialist",
+                      "Insurance approved",
+                    ].map((template) => (
+                      <button
+                        key={template}
+                        onClick={() => {
+                          const currentNote = documentNote || selectedDocument.notes || ""
+                          const newNote = currentNote ? `${currentNote}\n${template}` : template
+                          setDocumentNote(newNote)
+                        }}
+                        className="text-xs px-2 py-1 bg-muted hover:bg-muted/80 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        + {template}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowTagDocument(false)
+                      setSelectedDocument(null)
+                      setNewTag("")
+                      setDocumentNote("")
+                    }}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      saveDocumentNote()
+                      setShowTagDocument(false)
+                      setSelectedDocument(null)
+                      setNewTag("")
+                      setDocumentNote("")
+                    }}
+                    className="flex-1"
+                  >
+                    Save
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
+        )}
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-
-          <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Upload Documents</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                {selectedFiles && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-600">Selected files:</p>
-                    {Array.from(selectedFiles).map((file, index) => (
-                      <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                        <FileText className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm">{file.name}</span>
-                        <span className="text-xs text-gray-500">({(file.size / 1024).toFixed(1)} KB)</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Select folder:</label>
-                  <Select defaultValue="other">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {folders
-                        .filter((f) => f.id !== "all")
-                        .map((folder) => (
-                          <SelectItem key={folder.id} value={folder.id}>
-                            {folder.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button
-                    onClick={() => uploadFiles("other")}
-                    disabled={isUploading || !selectedChildId}
-                    className="flex-1"
-                  >
-                    {isUploading ? "Uploading..." : "Upload Files"}
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
-                    Cancel
-                  </Button>
-                </div>
+        {showAddNote && selectedDocument && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card border border-border rounded-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-foreground">Add Comment</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowAddNote(false)
+                    setSelectedDocument(null)
+                    setDocumentNote("")
+                  }}
+                  className="p-2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-            </DialogContent>
-          </Dialog>
 
-          <Dialog open={showVoiceScribe} onOpenChange={setShowVoiceScribe}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>AI Voice Scribe</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600">
-                  Record your voice notes and we'll convert them to structured text, perfect for doctor visits.
-                </p>
-
-                <div className="flex items-center justify-center py-8">
-                  <Button
-                    size="lg"
-                    variant={isRecording ? "destructive" : "default"}
-                    onClick={toggleRecording}
-                    className="w-24 h-24 rounded-full"
-                  >
-                    {isRecording ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
-                  </Button>
-                </div>
-
-                {isRecording && (
-                  <div className="text-center">
-                    <div className="inline-flex items-center gap-2 text-red-600">
-                      <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
-                      Recording...
-                    </div>
-                  </div>
-                )}
-
-                {voiceNote && (
-                  <div className="space-y-3">
-                    <label className="block text-sm font-medium text-gray-700">Transcribed Notes:</label>
-                    <Textarea
-                      value={voiceNote}
-                      onChange={(e) => setVoiceNote(e.target.value)}
-                      rows={4}
-                      placeholder="Your voice notes will appear here..."
-                    />
-                    <div className="flex gap-3">
-                      <Button onClick={saveVoiceNote} className="flex-1">
-                        <Check className="h-4 w-4 mr-2" />
-                        Save as Document
-                      </Button>
-                      <Button variant="outline" onClick={() => setVoiceNote("")}>
-                        <X className="h-4 w-4 mr-2" />
-                        Clear
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={showDocumentDetails} onOpenChange={setShowDocumentDetails}>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-blue-600" />
-                  Document Details & AI Summary
-                </DialogTitle>
-              </DialogHeader>
-              {selectedDocument && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <Label className="font-semibold">Name:</Label>
-                      <p className="text-gray-700">{selectedDocument.name}</p>
-                    </div>
-                    <div>
-                      <Label className="font-semibold">Size:</Label>
-                      <p className="text-gray-700">{(selectedDocument.size / 1024).toFixed(1)} KB</p>
-                    </div>
-                    <div>
-                      <Label className="font-semibold">Upload Date:</Label>
-                      <p className="text-gray-700">{new Date(selectedDocument.uploadDate).toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                      <Label className="font-semibold">Folder:</Label>
-                      <p className="text-gray-700">{folders.find((f) => f.id === selectedDocument.folder)?.name}</p>
-                    </div>
-                  </div>
-
-                  {selectedDocument.tags.length > 0 && (
-                    <div>
-                      <Label className="font-semibold mb-2 block">Tags:</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedDocument.tags.map((tag) => (
-                          <Badge key={tag} variant="secondary">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedDocument.notes && (
-                    <div>
-                      <Label className="font-semibold mb-2 block">Notes:</Label>
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-gray-700">{selectedDocument.notes}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <Label className="font-semibold mb-2 block">AI Summary:</Label>
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-gray-700">{selectedDocument.aiSummary}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button onClick={() => exportDocument(selectedDocument)} variant="outline">
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export Document
-                    </Button>
-                    <Button onClick={() => setShowDocumentDetails(false)}>Close</Button>
-                  </div>
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={showRenameFolder} onOpenChange={setShowRenameFolder}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Rename Folder</DialogTitle>
-              </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="folderName">Folder Name</Label>
-                  <Input
-                    id="folderName"
-                    value={newFolderName}
-                    onChange={(e) => setNewFolderName(e.target.value)}
-                    placeholder="Enter new folder name"
-                  />
+                  <p className="text-sm font-medium text-foreground mb-2 truncate">{selectedDocument.name}</p>
                 </div>
-                <div className="flex gap-3">
-                  <Button onClick={renameFolder} disabled={!newFolderName.trim()}>
-                    <Check className="h-4 w-4 mr-2" />
-                    Rename
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowRenameFolder(false)}>
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
 
-          <Dialog open={showMoveDocument} onOpenChange={setShowMoveDocument}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Move Document</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600">Move "{selectedDocument?.name}" to a different folder:</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {folders
-                    .filter((f) => f.id !== "all" && f.id !== selectedDocument?.folder)
-                    .map((folder) => (
-                      <Button
-                        key={folder.id}
-                        variant="outline"
-                        onClick={() => moveDocument(folder.id)}
-                        className="justify-start"
-                      >
-                        <FolderOpen className="h-4 w-4 mr-2" />
-                        {folder.name}
-                      </Button>
-                    ))}
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={showTagDocument} onOpenChange={setShowTagDocument}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Manage Tags</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
                 <div>
-                  <Label htmlFor="newTag">Add New Tag</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="newTag"
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      placeholder="Enter tag name"
-                      onKeyPress={(e) => e.key === "Enter" && addTagToDocument()}
-                    />
-                    <Button onClick={addTagToDocument} disabled={!newTag.trim()}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {selectedDocument && selectedDocument.tags.length > 0 && (
-                  <div>
-                    <Label>Current Tags:</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {selectedDocument.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="flex items-center gap-1">
-                          {tag}
-                          <button onClick={() => removeTagFromDocument(tag)} className="ml-1 hover:text-red-600">
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <Button onClick={() => setShowTagDocument(false)}>Done</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={showAddNote} onOpenChange={setShowAddNote}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{selectedDocument?.notes ? "Edit Note" : "Add Note"}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="documentNote">Note</Label>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Your Comment</label>
                   <Textarea
-                    id="documentNote"
+                    placeholder="Add your thoughts, notes, or reminders about this document..."
                     value={documentNote}
                     onChange={(e) => setDocumentNote(e.target.value)}
-                    placeholder="Add your notes about this document..."
                     rows={4}
+                    className="resize-none"
                   />
                 </div>
-                <div className="flex gap-3">
-                  <Button onClick={saveDocumentNote}>
-                    <Check className="h-4 w-4 mr-2" />
-                    Save Note
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowAddNote(false)}>
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowAddNote(false)
+                      setSelectedDocument(null)
+                      setDocumentNote("")
+                    }}
+                    className="flex-1"
+                  >
                     Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      saveDocumentNote()
+                      setShowAddNote(false)
+                      setSelectedDocument(null)
+                      setDocumentNote("")
+                    }}
+                    className="flex-1"
+                  >
+                    Save Comment
                   </Button>
                 </div>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+            </div>
+          </div>
+        )}
+
+        <DocumentViewerModal
+          document={viewerDocument}
+          isOpen={showDocumentViewer}
+          onClose={() => {
+            setShowDocumentViewer(false)
+            setViewerDocument(null)
+          }}
+          onShare={handleShareDocument}
+        />
       </div>
     </PageWrapper>
   )

@@ -52,7 +52,7 @@ export default function SignInPage() {
 
       {/* Main Content */}
       <div className="ml-12 lg:ml-52 min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
-        <div className="w-full max-w-md space-y-6 sm:space-y-8">
+        <div className="w-full max-w-[calc(100%-2rem)] sm:max-w-lg space-y-6 sm:space-y-8">
           {/* Back Button */}
           <Link
             href="/"

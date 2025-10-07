@@ -5,14 +5,28 @@ import { createContext, useContext, useState, type ReactNode } from "react"
 interface NavigationContextType {
   isPinned: boolean
   setIsPinned: (pinned: boolean) => void
+  isMobileMenuOpen: boolean
+  setIsMobileMenuOpen: (open: boolean) => void
 }
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined)
 
 export function NavigationProvider({ children }: { children: ReactNode }) {
   const [isPinned, setIsPinned] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  return <NavigationContext.Provider value={{ isPinned, setIsPinned }}>{children}</NavigationContext.Provider>
+  return (
+    <NavigationContext.Provider
+      value={{
+        isPinned,
+        setIsPinned,
+        isMobileMenuOpen,
+        setIsMobileMenuOpen,
+      }}
+    >
+      {children}
+    </NavigationContext.Provider>
+  )
 }
 
 export function useNavigation() {

@@ -18,12 +18,11 @@ import {
   Clock,
   Plus,
   Pin,
-  Menu,
-  X,
   FolderOpen,
   BookOpen,
   Edit2,
   Trash2,
+  X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useNavigation } from "@/components/navigation-context"
@@ -31,7 +30,7 @@ import { mockChatHistory } from "@/data/mockChatHistory"
 
 export function Navigation() {
   const [expandedSections, setExpandedSections] = useState<string[]>(["parent", "enterprise"])
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { isMobileMenuOpen, setIsMobileMenuOpen, isPinned, setIsPinned } = useNavigation()
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -39,8 +38,13 @@ export function Navigation() {
   const [editingProject, setEditingProject] = useState<string | null>(null) // Added state for tracking which project is being edited
   const [editProjectName, setEditProjectName] = useState("") // Added state for editing project name
   const [isHovered, setIsHovered] = useState(false) // Added hover state for navigation expansion
-  const { isPinned, setIsPinned } = useNavigation()
   const navRef = useRef<HTMLElement>(null)
+
+  const closeMobileMenu = () => {
+    if (isMobileMenuOpen) {
+      setIsMobileMenuOpen(false)
+    }
+  }
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
@@ -71,18 +75,6 @@ export function Navigation() {
     } else {
       setExpandedSections([...expandedSections, section])
     }
-  }
-
-  const togglePin = () => {
-    setIsPinned(!isPinned)
-  }
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen)
-  }
-
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false)
   }
 
   const handleEditProject = (projectId: string, currentName: string) => {
@@ -135,9 +127,9 @@ export function Navigation() {
 
   const parentApps = [
     { href: "/health-plan", icon: Stethoscope, label: "Health Journey" },
-    { href: "/care-community", icon: Users, label: "Community" },
     { href: "/doc-hub", icon: FileText, label: "DocHub" },
     { href: "/condition-knowledge", icon: BookOpen, label: "Condition Knowledge" },
+    { href: "/community", icon: Users, label: "Community" },
   ]
 
   const enterpriseApps = [{ href: "/research-platform", icon: FlaskConical, label: "Research Platform" }]
@@ -160,38 +152,20 @@ export function Navigation() {
 
   return (
     <>
-      <button
-        onClick={toggleMobileMenu}
-        className="fixed top-4 left-4 z-[70] p-2 rounded-lg bg-sidebar/95 backdrop-blur border border-sidebar-border lg:hidden min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
-        aria-label="Toggle navigation menu"
-      >
-        {isMobileMenuOpen ? (
-          <X className="h-5 w-5 text-sidebar-foreground" />
-        ) : (
-          <Menu className="h-5 w-5 text-sidebar-foreground" />
-        )}
-      </button>
-
-      {isMobileMenuOpen && <div className="fixed inset-0 bg-black/50 z-[65] lg:hidden" onClick={closeMobileMenu} />}
-
       <nav
         ref={navRef}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={cn(
           "fixed left-0 top-0 z-[60] h-full bg-sidebar/95 backdrop-blur border-r border-sidebar-border transition-all duration-300 ease-in-out",
-          "hidden lg:block",
-          shouldExpand ? "w-52 lg:w-56 xl:w-60" : "w-12 lg:w-14",
+          "hidden md:block",
+          shouldExpand ? "w-52 lg:w-56 xl:w-60" : "w-12 md:w-14",
         )}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="border-b border-sidebar-border flex items-center justify-between p-3">
-            <Link
-              href="/"
-              className="flex items-center transition-all duration-200 space-x-2"
-              onClick={closeMobileMenu}
-            >
+            <Link href="/" className="flex items-center transition-all duration-200 space-x-2">
               <div className="flex-shrink-0 h-6 w-6">
                 <Image
                   src="/images/caregene-logo.png"
@@ -201,16 +175,16 @@ export function Navigation() {
                   className="w-full h-full object-contain"
                 />
               </div>
-              {(shouldExpand || isMobileMenuOpen) && (
+              {shouldExpand && (
                 <span className="font-serif font-bold text-sm text-sidebar-foreground whitespace-nowrap">
                   Caregene AI
                 </span>
               )}
             </Link>
 
-            {(shouldExpand || isMobileMenuOpen) && (
+            {shouldExpand && (
               <button
-                onClick={togglePin}
+                onClick={() => setIsPinned(!isPinned)}
                 className={cn(
                   "p-1 rounded-md hover:bg-sidebar-accent/10 transition-colors sm:block hidden",
                   isPinned ? "text-sidebar-primary" : "text-muted-foreground",
@@ -228,13 +202,12 @@ export function Navigation() {
             <Link
               href="/"
               className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2"
-              onClick={closeMobileMenu}
             >
               <Plus className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
-              {(shouldExpand || isMobileMenuOpen) && <span className="text-sm text-sidebar-foreground">New Chat</span>}
+              {shouldExpand && <span className="text-sm text-sidebar-foreground">New Chat</span>}
             </Link>
 
-            {shouldExpand || isMobileMenuOpen ? (
+            {shouldExpand ? (
               <div className="my-2">
                 <div className="relative">
                   <div className="flex items-center rounded-lg border border-sidebar-border bg-sidebar-accent/5 h-8 px-2">
@@ -264,7 +237,6 @@ export function Navigation() {
                             key={result.id}
                             href={`/chat/${result.id}`}
                             className="block p-2 rounded-lg hover:bg-sidebar-accent/10 transition-colors"
-                            onClick={closeMobileMenu}
                           >
                             <div className="text-xs font-medium text-sidebar-foreground truncate">{result.title}</div>
                             <div className="text-xs text-muted-foreground truncate mt-1">{result.content}</div>
@@ -281,14 +253,13 @@ export function Navigation() {
               <Link
                 href="/search"
                 className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2"
-                onClick={closeMobileMenu}
               >
                 <Search className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
               </Link>
             )}
 
             {/* Projects */}
-            {(shouldExpand || isMobileMenuOpen) && projects.length > 0 && (
+            {shouldExpand && projects.length > 0 && (
               <div className="ml-6 mt-1 space-y-0.5">
                 {projects.map((project) => (
                   <div key={project.id} className="group">
@@ -320,11 +291,7 @@ export function Navigation() {
                       </div>
                     ) : (
                       <div className="flex items-center space-x-2 px-2 py-1 rounded-lg hover:bg-sidebar-accent/10 transition-colors text-sm text-muted-foreground hover:text-foreground group">
-                        <Link
-                          href={`/?project=${project.id}`}
-                          className="flex items-center space-x-2 flex-1 min-w-0"
-                          onClick={closeMobileMenu}
-                        >
+                        <Link href={`/?project=${project.id}`} className="flex items-center space-x-2 flex-1 min-w-0">
                           <FolderOpen className="h-3 w-3 flex-shrink-0 text-sidebar-primary opacity-60 group-hover:opacity-100" />
                           <span className="truncate">{truncateProjectName(project.name)}</span>
                         </Link>
@@ -353,15 +320,12 @@ export function Navigation() {
             <Link
               href="/recent"
               className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2 mb-2"
-              onClick={closeMobileMenu}
             >
               <Clock className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
-              {(shouldExpand || isMobileMenuOpen) && (
-                <span className="text-sm text-sidebar-foreground">Recent Chats</span>
-              )}
+              {shouldExpand && <span className="text-sm text-sidebar-foreground">Recent Chats</span>}
             </Link>
 
-            {(shouldExpand || isMobileMenuOpen) && <div className="border-t border-sidebar-border/50 my-2" />}
+            {shouldExpand && <div className="border-t border-sidebar-border/50 my-2" />}
 
             {/* Parent Apps Section */}
             <div>
@@ -371,11 +335,9 @@ export function Navigation() {
               >
                 <div className="flex items-center space-x-2">
                   <Dna className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
-                  {(shouldExpand || isMobileMenuOpen) && (
-                    <span className="text-sm font-medium text-sidebar-foreground">Care Hub</span>
-                  )}
+                  {shouldExpand && <span className="text-sm font-medium text-sidebar-foreground">Care Hub</span>}
                 </div>
-                {(shouldExpand || isMobileMenuOpen) && (
+                {shouldExpand && (
                   <>
                     {expandedSections.includes("parent") ? (
                       <ChevronDown className="h-3 w-3" />
@@ -386,14 +348,13 @@ export function Navigation() {
                 )}
               </button>
 
-              {(shouldExpand || isMobileMenuOpen) && expandedSections.includes("parent") && (
+              {shouldExpand && expandedSections.includes("parent") && (
                 <div className="ml-6 mt-1">
                   {parentApps.map((app) => (
                     <Link
                       key={app.href}
                       href={app.href}
                       className="flex items-center space-x-2 px-2 py-1 rounded-lg hover:bg-sidebar-accent/10 transition-colors text-sm text-foreground hover:text-muted-foreground"
-                      onClick={closeMobileMenu}
                     >
                       <app.icon className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
                       <span>{app.label}</span>
@@ -411,11 +372,9 @@ export function Navigation() {
               >
                 <div className="flex items-center space-x-2">
                   <FlaskConical className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
-                  {(shouldExpand || isMobileMenuOpen) && (
-                    <span className="text-sm font-medium text-sidebar-foreground">Research</span>
-                  )}
+                  {shouldExpand && <span className="text-sm font-medium text-sidebar-foreground">Research</span>}
                 </div>
-                {(shouldExpand || isMobileMenuOpen) && (
+                {shouldExpand && (
                   <>
                     {expandedSections.includes("enterprise") ? (
                       <ChevronDown className="h-3 w-3" />
@@ -426,14 +385,13 @@ export function Navigation() {
                 )}
               </button>
 
-              {(shouldExpand || isMobileMenuOpen) && expandedSections.includes("enterprise") && (
+              {shouldExpand && expandedSections.includes("enterprise") && (
                 <div className="ml-6 mt-1">
                   {enterpriseApps.map((app) => (
                     <Link
                       key={app.href}
                       href={app.href}
                       className="flex items-center space-x-2 px-2 py-1 rounded-lg hover:bg-sidebar-accent/10 transition-colors text-sm text-foreground hover:text-muted-foreground"
-                      onClick={closeMobileMenu}
                     >
                       <app.icon className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
                       <span>{app.label}</span>
@@ -450,50 +408,38 @@ export function Navigation() {
               <Link
                 href="/subscriptions"
                 className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2"
-                onClick={closeMobileMenu}
               >
                 <CreditCard className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
-                {(shouldExpand || isMobileMenuOpen) && (
-                  <span className="text-sm text-sidebar-foreground">Care Plans</span>
-                )}
+                {shouldExpand && <span className="text-sm text-sidebar-foreground">Care Plans</span>}
               </Link>
 
               <Link
                 href="/business"
                 className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2"
-                onClick={closeMobileMenu}
               >
                 <Building2 className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
-                {(shouldExpand || isMobileMenuOpen) && (
-                  <span className="text-sm text-sidebar-foreground">For Healthcare</span>
-                )}
+                {shouldExpand && <span className="text-sm text-sidebar-foreground">For Healthcare</span>}
               </Link>
 
               <Link
                 href="/contact"
                 className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2"
-                onClick={closeMobileMenu}
               >
                 <Users className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
-                {(shouldExpand || isMobileMenuOpen) && (
-                  <span className="text-sm text-sidebar-foreground">Contact Us</span>
-                )}
+                {shouldExpand && <span className="text-sm text-sidebar-foreground">Contact Us</span>}
               </Link>
 
               <Link
                 href="/settings"
                 className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2"
-                onClick={closeMobileMenu}
               >
                 <Settings className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
-                {(shouldExpand || isMobileMenuOpen) && (
-                  <span className="text-sm text-sidebar-foreground">Settings & Help</span>
-                )}
+                {shouldExpand && <span className="text-sm text-sidebar-foreground">Settings & Help</span>}
               </Link>
 
-              {(shouldExpand || isMobileMenuOpen) && (
+              {shouldExpand && (
                 <div className="ml-6 mt-2 pt-2 border-t border-sidebar-border/50">
-                  <div className="px-2 text-xs text-muted-foreground text-center">© 2024 Caregene AI</div>
+                  <div className="px-2 text-xs text-muted-foreground text-center">© 2025 Caregene AI</div>
                 </div>
               )}
             </div>
@@ -502,57 +448,57 @@ export function Navigation() {
       </nav>
 
       {isMobileMenuOpen && (
-        <nav className="fixed left-0 top-0 z-[68] h-full w-80 max-w-[85vw] bg-sidebar/98 backdrop-blur border-r border-sidebar-border lg:hidden overflow-hidden">
+        <nav className="fixed left-0 top-0 z-[68] h-full w-80 max-w-[85vw] bg-sidebar/98 backdrop-blur border-r border-sidebar-border md:hidden overflow-hidden">
           <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="border-b border-sidebar-border flex items-center justify-between p-4">
+            <div className="border-b border-sidebar-border flex items-center justify-between p-2.5">
               <Link
                 href="/"
-                className="flex items-center transition-all duration-200 space-x-3"
                 onClick={closeMobileMenu}
+                className="flex items-center transition-all duration-200 space-x-2"
               >
-                <div className="flex-shrink-0 h-7 w-7">
+                <div className="flex-shrink-0 h-6 w-6">
                   <Image
                     src="/images/caregene-logo.png"
                     alt="Caregene AI"
-                    width={28}
-                    height={28}
+                    width={24}
+                    height={24}
                     className="w-full h-full object-contain"
                   />
                 </div>
-                <span className="font-serif font-bold text-lg text-sidebar-foreground whitespace-nowrap">
+                <span className="font-serif font-bold text-base text-sidebar-foreground whitespace-nowrap">
                   Caregene AI
                 </span>
               </Link>
             </div>
 
             {/* Navigation Items */}
-            <div className="flex-1 overflow-y-auto px-3 py-3">
+            <div className="flex-1 overflow-y-auto px-2 py-2">
               {/* New Chat */}
               <Link
                 href="/"
-                className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-10 space-x-3 px-3 touch-manipulation"
                 onClick={closeMobileMenu}
+                className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2 touch-manipulation"
               >
-                <Plus className="h-5 w-5 flex-shrink-0 text-sidebar-primary" />
-                <span className="text-base text-sidebar-foreground">New Chat</span>
+                <Plus className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
+                <span className="text-sm text-sidebar-foreground">New Chat</span>
               </Link>
 
               {/* Search */}
-              <div className="my-3">
+              <div className="my-2">
                 <div className="relative">
-                  <div className="flex items-center rounded-lg border border-sidebar-border bg-sidebar-accent/5 h-10 px-3">
-                    <Search className="h-5 w-5 flex-shrink-0 text-muted-foreground mr-3" />
+                  <div className="flex items-center rounded-lg border border-sidebar-border bg-sidebar-accent/5 h-8 px-2">
+                    <Search className="h-4 w-4 flex-shrink-0 text-muted-foreground mr-2" />
                     <input
                       type="text"
                       placeholder="Search chats..."
                       value={searchQuery}
                       onChange={(e) => handleSearch(e.target.value)}
-                      className="flex-1 bg-transparent text-base text-sidebar-foreground placeholder:text-muted-foreground border-0 outline-none"
+                      className="flex-1 bg-transparent text-sm text-sidebar-foreground placeholder:text-muted-foreground border-0 outline-none"
                     />
                     {searchQuery && (
-                      <button onClick={clearSearch} className="ml-2 p-1 hover:bg-sidebar-accent/20 rounded">
-                        <X className="h-4 w-4 text-muted-foreground" />
+                      <button onClick={clearSearch} className="ml-1 p-0.5 hover:bg-sidebar-accent/20 rounded">
+                        <X className="h-3 w-3 text-muted-foreground" />
                       </button>
                     )}
                   </div>
@@ -560,23 +506,23 @@ export function Navigation() {
 
                 {/* Mobile Search Results */}
                 {isSearching && (
-                  <div className="mt-2 max-h-48 overflow-y-auto">
+                  <div className="mt-1 max-h-40 overflow-y-auto">
                     {searchResults.length > 0 ? (
-                      <div className="space-y-1">
+                      <div className="space-y-0.5">
                         {searchResults.map((result) => (
                           <Link
                             key={result.id}
                             href={`/chat/${result.id}`}
-                            className="block p-3 rounded-lg hover:bg-sidebar-accent/10 transition-colors"
                             onClick={closeMobileMenu}
+                            className="block p-2 rounded-lg hover:bg-sidebar-accent/10 transition-colors"
                           >
-                            <div className="text-sm font-medium text-sidebar-foreground truncate">{result.title}</div>
-                            <div className="text-sm text-muted-foreground truncate mt-1">{result.content}</div>
+                            <div className="text-xs font-medium text-sidebar-foreground truncate">{result.title}</div>
+                            <div className="text-xs text-muted-foreground truncate mt-0.5">{result.content}</div>
                           </Link>
                         ))}
                       </div>
                     ) : (
-                      <div className="p-3 text-sm text-muted-foreground text-center">No chats found</div>
+                      <div className="p-2 text-xs text-muted-foreground text-center">No chats found</div>
                     )}
                   </div>
                 )}
@@ -584,11 +530,11 @@ export function Navigation() {
 
               {/* Projects - Mobile */}
               {projects.length > 0 && (
-                <div className="ml-8 mt-1 space-y-1">
+                <div className="ml-6 mt-1 space-y-0.5">
                   {projects.map((project) => (
                     <div key={project.id} className="group">
                       {editingProject === project.id ? (
-                        <div className="flex items-center space-x-2 px-3 py-2">
+                        <div className="flex items-center space-x-1 px-2 py-1">
                           <input
                             type="text"
                             value={editProjectName}
@@ -597,34 +543,34 @@ export function Navigation() {
                               if (e.key === "Enter") handleSaveProjectName(project.id)
                               if (e.key === "Escape") handleCancelEdit()
                             }}
-                            className="flex-1 text-sm bg-sidebar-accent/20 border border-sidebar-border rounded px-2 py-1 text-sidebar-foreground"
+                            className="flex-1 text-xs bg-sidebar-accent/20 border border-sidebar-border rounded px-1.5 py-0.5 text-sidebar-foreground"
                             autoFocus
                           />
                           <button
                             onClick={() => handleSaveProjectName(project.id)}
-                            className="p-1 hover:bg-sidebar-accent/20 rounded text-green-600"
+                            className="p-0.5 hover:bg-sidebar-accent/20 rounded text-green-600"
                           >
                             ✓
                           </button>
                           <button
                             onClick={handleCancelEdit}
-                            className="p-1 hover:bg-sidebar-accent/20 rounded text-red-600"
+                            className="p-0.5 hover:bg-sidebar-accent/20 rounded text-red-600"
                           >
                             ✕
                           </button>
                         </div>
                       ) : (
-                        <div className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-sidebar-accent/10 transition-colors text-sm text-muted-foreground hover:text-foreground group">
+                        <div className="flex items-center space-x-2 px-2 py-1 rounded-lg hover:bg-sidebar-accent/10 transition-colors text-xs text-muted-foreground hover:text-foreground group">
                           <Link
                             href={`/?project=${project.id}`}
-                            className="flex items-center space-x-3 flex-1 min-w-0"
                             onClick={closeMobileMenu}
+                            className="flex items-center space-x-2 flex-1 min-w-0"
                           >
-                            <FolderOpen className="h-4 w-4 flex-shrink-0 text-sidebar-primary opacity-60 group-hover:opacity-100" />
+                            <FolderOpen className="h-3 w-3 flex-shrink-0 text-sidebar-primary opacity-60 group-hover:opacity-100" />
                             <div className="flex-1 min-w-0">
                               <span className="truncate block">{truncateProjectName(project.name)}</span>
                               {project.type !== "general" && (
-                                <span className="text-xs text-muted-foreground/60">
+                                <span className="text-[10px] text-muted-foreground/60">
                                   {projectTypes.find((t) => t.value === project.type)?.label || project.type}
                                 </span>
                               )}
@@ -632,17 +578,17 @@ export function Navigation() {
                           </Link>
                           <button
                             onClick={() => handleEditProject(project.id, project.name)}
-                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-sidebar-accent/20 rounded transition-opacity"
+                            className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-sidebar-accent/20 rounded transition-opacity"
                             title="Edit project name"
                           >
-                            <Edit2 className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                            <Edit2 className="h-3 w-3 text-muted-foreground hover:text-foreground" />
                           </button>
                           <button
                             onClick={() => handleDeleteProject(project.id)}
-                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-sidebar-accent/20 rounded transition-opacity"
+                            className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-sidebar-accent/20 rounded transition-opacity"
                             title="Delete project"
                           >
-                            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+                            <Trash2 className="h-3 w-3 text-muted-foreground hover:text-red-500" />
                           </button>
                         </div>
                       )}
@@ -654,42 +600,42 @@ export function Navigation() {
               {/* Recent Chats */}
               <Link
                 href="/recent"
-                className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-10 space-x-3 px-3 mb-3"
                 onClick={closeMobileMenu}
+                className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2 mb-2"
               >
-                <Clock className="h-5 w-5 flex-shrink-0 text-sidebar-primary" />
-                <span className="text-base text-sidebar-foreground">Recent Chats</span>
+                <Clock className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
+                <span className="text-sm text-sidebar-foreground">Recent Chats</span>
               </Link>
 
-              <div className="border-t border-sidebar-border/50 mb-3" />
+              <div className="border-t border-sidebar-border/50 mb-2" />
 
               {/* Parent Apps Section */}
               <div>
                 <button
                   onClick={() => toggleSection("parent")}
-                  className="flex items-center w-full rounded-lg hover:bg-sidebar-accent/10 transition-colors h-10 justify-between space-x-3 px-3 touch-manipulation"
+                  className="flex items-center w-full rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 justify-between space-x-2 px-2 touch-manipulation"
                 >
-                  <div className="flex items-center space-x-3">
-                    <Dna className="h-5 w-5 flex-shrink-0 text-sidebar-primary" />
-                    <span className="text-base font-medium text-sidebar-foreground">Care Hub</span>
+                  <div className="flex items-center space-x-2">
+                    <Dna className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
+                    <span className="text-sm font-medium text-sidebar-foreground">Care Hub</span>
                   </div>
                   {expandedSections.includes("parent") ? (
-                    <ChevronDown className="h-5 w-5" />
+                    <ChevronDown className="h-4 w-4" />
                   ) : (
-                    <ChevronRight className="h-5 w-5" />
+                    <ChevronRight className="h-4 w-4" />
                   )}
                 </button>
 
                 {expandedSections.includes("parent") && (
-                  <div className="ml-8 mt-1">
+                  <div className="ml-6 mt-0.5">
                     {parentApps.map((app) => (
                       <Link
                         key={app.href}
                         href={app.href}
-                        className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-sidebar-accent/10 transition-colors text-sm text-foreground hover:text-muted-foreground touch-manipulation"
                         onClick={closeMobileMenu}
+                        className="flex items-center space-x-2 px-2 py-1 rounded-lg hover:bg-sidebar-accent/10 transition-colors text-xs text-foreground hover:text-muted-foreground touch-manipulation"
                       >
-                        <app.icon className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
+                        <app.icon className="h-3.5 w-3.5 flex-shrink-0 text-sidebar-primary" />
                         <span>{app.label}</span>
                       </Link>
                     ))}
@@ -698,32 +644,32 @@ export function Navigation() {
               </div>
 
               {/* Enterprise/Science Section */}
-              <div className="mt-1">
+              <div className="mt-0.5">
                 <button
                   onClick={() => toggleSection("enterprise")}
-                  className="flex items-center w-full rounded-lg hover:bg-sidebar-accent/10 transition-colors h-10 justify-between space-x-3 px-3 touch-manipulation"
+                  className="flex items-center w-full rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 justify-between space-x-2 px-2 touch-manipulation"
                 >
-                  <div className="flex items-center space-x-3">
-                    <FlaskConical className="h-5 w-5 flex-shrink-0 text-sidebar-primary" />
-                    <span className="text-base font-medium text-sidebar-foreground">Research</span>
+                  <div className="flex items-center space-x-2">
+                    <FlaskConical className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
+                    <span className="text-sm font-medium text-sidebar-foreground">Research</span>
                   </div>
                   {expandedSections.includes("enterprise") ? (
-                    <ChevronDown className="h-5 w-5" />
+                    <ChevronDown className="h-4 w-4" />
                   ) : (
-                    <ChevronRight className="h-5 w-5" />
+                    <ChevronRight className="h-4 w-4" />
                   )}
                 </button>
 
                 {expandedSections.includes("enterprise") && (
-                  <div className="ml-8 mt-1">
+                  <div className="ml-6 mt-0.5">
                     {enterpriseApps.map((app) => (
                       <Link
                         key={app.href}
                         href={app.href}
-                        className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-sidebar-accent/10 transition-colors text-sm text-foreground hover:text-muted-foreground touch-manipulation"
                         onClick={closeMobileMenu}
+                        className="flex items-center space-x-2 px-2 py-1 rounded-lg hover:bg-sidebar-accent/10 transition-colors text-xs text-foreground hover:text-muted-foreground touch-manipulation"
                       >
-                        <app.icon className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
+                        <app.icon className="h-3.5 w-3.5 flex-shrink-0 text-sidebar-primary" />
                         <span>{app.label}</span>
                       </Link>
                     ))}
@@ -732,46 +678,47 @@ export function Navigation() {
               </div>
             </div>
 
-            <div className="px-3 pb-4 border-t border-sidebar-border">
-              <div className="py-3">
+            {/* Footer */}
+            <div className="px-2 pb-3 border-t border-sidebar-border">
+              <div className="py-2">
                 <Link
                   href="/subscriptions"
-                  className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-10 space-x-3 px-3"
                   onClick={closeMobileMenu}
+                  className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2"
                 >
-                  <CreditCard className="h-5 w-5 flex-shrink-0 text-sidebar-primary" />
-                  <span className="text-base text-sidebar-foreground">Care Plans</span>
+                  <CreditCard className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
+                  <span className="text-sm text-sidebar-foreground">Care Plans</span>
                 </Link>
 
                 <Link
                   href="/business"
-                  className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-10 space-x-3 px-3"
                   onClick={closeMobileMenu}
+                  className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2"
                 >
-                  <Building2 className="h-5 w-5 flex-shrink-0 text-sidebar-primary" />
-                  <span className="text-base text-sidebar-foreground">For Healthcare</span>
+                  <Building2 className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
+                  <span className="text-sm text-sidebar-foreground">For Healthcare</span>
                 </Link>
 
                 <Link
                   href="/contact"
-                  className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-10 space-x-3 px-3"
                   onClick={closeMobileMenu}
+                  className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2"
                 >
-                  <Users className="h-5 w-5 flex-shrink-0 text-sidebar-primary" />
-                  <span className="text-base text-sidebar-foreground">Contact Us</span>
+                  <Users className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
+                  <span className="text-sm text-sidebar-foreground">Contact Us</span>
                 </Link>
 
                 <Link
                   href="/settings"
-                  className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-10 space-x-3 px-3"
                   onClick={closeMobileMenu}
+                  className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2"
                 >
-                  <Settings className="h-5 w-5 flex-shrink-0 text-sidebar-primary" />
-                  <span className="text-base text-sidebar-foreground">Settings & Help</span>
+                  <Settings className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
+                  <span className="text-sm text-sidebar-foreground">Settings & Help</span>
                 </Link>
 
-                <div className="ml-8 mt-3 pt-3 border-t border-sidebar-border/50">
-                  <div className="px-3 text-xs text-muted-foreground">© 2024 Caregene AI</div>
+                <div className="ml-6 mt-2 pt-2 border-t border-sidebar-border/50">
+                  <div className="px-2 text-[10px] text-muted-foreground">© 2025 Caregene AI</div>
                 </div>
               </div>
             </div>

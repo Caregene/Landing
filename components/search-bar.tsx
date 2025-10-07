@@ -26,37 +26,48 @@ export function SearchBar() {
     }
   }
 
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchQuery(suggestion)
+    router.push(`/search?q=${encodeURIComponent(suggestion)}`)
+  }
+
   return (
-    <div className="fixed bottom-3 sm:bottom-4 md:bottom-6 lg:bottom-8 xl:bottom-10 left-1/2 transform -translate-x-1/2 w-full max-w-[280px] sm:max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl px-3 sm:px-4 md:px-4 lg:px-6 z-50">
+    <div
+      className={`${isSearchPage ? "relative" : "fixed bottom-3 sm:bottom-4 md:bottom-6 lg:bottom-8 xl:bottom-10 left-1/2 transform -translate-x-1/2"} w-full ${isSearchPage ? "max-w-full" : "max-w-[calc(100%-1rem)] sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl"} ${isSearchPage ? "" : "px-2 sm:px-4 md:px-4 lg:px-6"} z-50`}
+    >
       {!isSearchPage && (
-        <div className="flex justify-center gap-1 sm:gap-1.5 md:gap-2 lg:gap-2.5 xl:gap-3 mb-2 sm:mb-3 md:mb-4 lg:mb-5 flex-wrap">
+        <div className="flex justify-center gap-2 mb-4 flex-wrap">
           <Button
             variant="outline"
             size="sm"
-            className="rounded-full text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs xl:text-sm px-1 sm:px-1.5 md:px-2 lg:px-3 xl:px-4 py-0.5 sm:py-0.5 md:py-1 lg:py-1.5 bg-card/80 backdrop-blur-sm border-primary/20 hover:bg-primary/5 h-5 sm:h-6 md:h-7 lg:h-8 xl:h-9"
+            onClick={() => handleSuggestionClick("Analyze my symptoms")}
+            className="rounded-full text-sm px-4 py-2 bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-auto"
           >
-            Genetic counseling
+            Analyze my symptoms
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="rounded-full text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs xl:text-sm px-1 sm:px-1.5 md:px-2 lg:px-3 xl:px-4 py-0.5 sm:py-0.5 md:py-1 lg:py-1.5 bg-card/80 backdrop-blur-sm border-primary/20 hover:bg-primary/5 h-5 sm:h-6 md:h-7 lg:h-8 xl:h-9"
+            onClick={() => handleSuggestionClick("Review health report")}
+            className="rounded-full text-sm px-4 py-2 bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-auto"
           >
-            Symptom analysis
+            Review health report
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="rounded-full text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs xl:text-sm px-1 sm:px-1.5 md:px-2 lg:px-3 xl:px-4 py-0.5 sm:py-0.5 md:py-1 lg:py-1.5 bg-card/80 backdrop-blur-sm border-primary/20 hover:bg-primary/5 h-5 sm:h-6 md:h-7 lg:h-8 xl:h-9"
+            onClick={() => handleSuggestionClick("Create meal plan")}
+            className="rounded-full text-sm px-4 py-2 bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-auto"
           >
-            Research insights
+            Create meal plan
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="rounded-full text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs xl:text-sm px-1 sm:px-1.5 md:px-2 lg:px-3 xl:px-4 py-0.5 sm:py-0.5 md:py-1 lg:py-1.5 bg-card/80 backdrop-blur-sm border-primary/20 hover:bg-primary/5 h-5 sm:h-6 md:h-7 lg:h-8 xl:h-9"
+            onClick={() => handleSuggestionClick("Track my progress")}
+            className="rounded-full text-sm px-4 py-2 bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-auto"
           >
-            Care planning
+            Track my progress
           </Button>
         </div>
       )}
@@ -77,10 +88,10 @@ export function SearchBar() {
 
           <Input
             type="text"
-            placeholder="Ask Caregene about your health questions"
+            placeholder="Ask CareGene"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 border-0 bg-transparent px-4 py-3 text-xs leading-relaxed focus:ring-0 focus:outline-none placeholder:text-gray-400 placeholder:text-xs min-h-[48px]"
+            className="flex-1 border-0 bg-transparent px-4 py-3 text-base leading-relaxed focus:ring-0 focus:outline-none placeholder:text-gray-500 min-h-[48px]"
           />
 
           <Button
