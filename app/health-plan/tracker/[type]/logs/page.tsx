@@ -35,22 +35,70 @@ export default function TrackerLogsPage() {
   const [typeFilter, setTypeFilter] = useState("all")
 
   useEffect(() => {
-    const loadLogs = () => {
-      const storageKey = `caregene-${trackerType}-entries`
-      const savedLogs = JSON.parse(localStorage.getItem(storageKey) || "[]")
+    const loadLogs = async () => {
+      // Build backend URL using dynamic trackerType; only allow known types to avoid 404s
+      const validTypes = new Set(["symptom", "nutrition", "medication"])
+      if (!validTypes.has(trackerType)) {
+        setLogs([])
+        setFilteredLogs([])
+        return
+      }
 
-      if (savedLogs.length === 0) {
+      const apiUrl = `http://localhost:8000/api/v1/tracking/${encodeURIComponent(trackerType)}/default`
+
+      // Helper: map backend shape to LogEntry
+      const mapToLogEntries = (items: any[]): LogEntry[] => {
+        return (items || []).map((item, index) => {
+          const id = item.id ?? item._id ?? `${Date.now()}_${index}`
+          const type = item.type ?? item.category ?? item.kind ?? ""
+          const title = item.title ?? item.name ?? item.event ?? type ?? ""
+          const timestamp = item.timestamp ?? item.createdAt ?? item.date ?? new Date().toISOString()
+          return {
+            id: String(id),
+            type: String(type || "Entry"),
+            title: String(title || "Entry"),
+            timestamp: String(timestamp),
+            severity: item.severity,
+            notes: item.notes ?? item.description ?? undefined,
+            duration: item.duration,
+            dosage: item.dosage,
+            quantity: item.quantity,
+          }
+        })
+      }
+
+      try {
+        const res = await fetch(apiUrl, { headers: { Accept: "application/json" } })
+        if (!res.ok) throw new Error(`Failed to fetch logs (HTTP ${res.status})`)
+        const raw = await res.json()
+
+        // Some APIs wrap in { data: [...] }
+        const arrayCandidate = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []
+
+        console.log("[tracker-logs] fetched raw:", raw)
+        const mapped = mapToLogEntries(arrayCandidate)
+        console.log("[tracker-logs] mapped entries:", mapped)
+
+        if (mapped.length > 0) {
+          setLogs(mapped)
+          setFilteredLogs(mapped)
+        } else {
+          // fallback to sample logs if API returns empty
+          const sampleLogs = getSampleLogs()
+          console.warn("[tracker-logs] empty API result, using samples")
+          setLogs(sampleLogs)
+          setFilteredLogs(sampleLogs)
+        }
+      } catch (err) {
+        console.error("[tracker-logs] fetch failed:", err)
+        // fallback to sample logs if API fails
         const sampleLogs = getSampleLogs()
         setLogs(sampleLogs)
         setFilteredLogs(sampleLogs)
-      } else {
-        setLogs(savedLogs)
-        setFilteredLogs(savedLogs)
       }
-    }
-
-    loadLogs()
-  }, [trackerType])
+    };
+    loadLogs();
+  }, [trackerType]);
 
   useEffect(() => {
     let filtered = logs
