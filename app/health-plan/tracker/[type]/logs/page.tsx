@@ -21,6 +21,7 @@ interface LogEntry {
   duration?: string
   dosage?: string
   quantity?: string
+  data?: Record<string, any>
 }
 
 export default function TrackerLogsPage() {
@@ -50,19 +51,31 @@ export default function TrackerLogsPage() {
       const mapToLogEntries = (items: any[]): LogEntry[] => {
         return (items || []).map((item, index) => {
           const id = item.id ?? item._id ?? `${Date.now()}_${index}`
-          const type = item.type ?? item.category ?? item.kind ?? ""
-          const title = item.title ?? item.name ?? item.event ?? type ?? ""
-          const timestamp = item.timestamp ?? item.createdAt ?? item.date ?? new Date().toISOString()
+          const type = item.type ?? item.category ?? item.kind ?? item.data?.type ?? ""
+          const title = item.title ?? item.name ?? item.event ?? item.data?.name ?? type ?? ""
+          // Prefer backend data.startTime if present
+          const timestamp = item.data?.startTime ?? item.timestamp ?? item.createdAt ?? item.date ?? new Date().toISOString()
+
+          // Hoist common medication/nutrition fields if they are inside data
+          const data = item.data || {}
+          const fromData = {
+            severity: data.severity ?? item.severity,
+            duration: data.duration ?? item.duration,
+            dosage: data.doseTaken ?? data.dosage ?? item.dosage,
+            quantity: data.quantity ?? item.quantity,
+            notes: data.notes ?? item.notes ?? item.description,
+          }
           return {
             id: String(id),
             type: String(type || "Entry"),
             title: String(title || "Entry"),
             timestamp: String(timestamp),
-            severity: item.severity,
-            notes: item.notes ?? item.description ?? undefined,
-            duration: item.duration,
-            dosage: item.dosage,
-            quantity: item.quantity,
+            severity: fromData.severity,
+            notes: fromData.notes,
+            duration: fromData.duration,
+            dosage: fromData.dosage,
+            quantity: fromData.quantity,
+            data,
           }
         })
       }
@@ -370,6 +383,30 @@ export default function TrackerLogsPage() {
                       <div>
                         <span className="font-medium text-gray-700">Quantity:</span>
                         <span className="ml-2 text-gray-600">{log.quantity}</span>
+                      </div>
+                    )}
+                    {log.data?.portionSize && (
+                      <div>
+                        <span className="font-medium text-gray-700">Portion Size:</span>
+                        <span className="ml-2 text-gray-600">{String(log.data.portionSize)}</span>
+                      </div>
+                    )}
+                    {log.data?.mealType && (
+                      <div>
+                        <span className="font-medium text-gray-700">Meal Type:</span>
+                        <span className="ml-2 text-gray-600">{String(log.data.mealType)}</span>
+                      </div>
+                    )}
+                    {log.data?.time && (
+                      <div>
+                        <span className="font-medium text-gray-700">Time Tag:</span>
+                        <span className="ml-2 text-gray-600">{String(log.data.time)}</span>
+                      </div>
+                    )}
+                    {log.data?.startTime && (
+                      <div className="col-span-2">
+                        <span className="font-medium text-gray-700">Recorded At:</span>
+                        <span className="ml-2 text-gray-600">{new Date(log.data.startTime).toLocaleString()}</span>
                       </div>
                     )}
                   </div>
