@@ -26,7 +26,60 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useNavigation } from "@/components/navigation-context"
-import { mockChatHistory } from "@/data/mockChatHistory"
+import { RecentChatsSidebar } from "@/components/recent-chats-sidebar"
+import { getAuthState, logout } from "@/lib/auth"
+import { useRouter } from "next/navigation"
+
+function UserProfileSection() {
+  const router = useRouter()
+  const [authState, setAuthState] = useState(() => getAuthState())
+
+  useEffect(() => {
+    // Update auth state when component mounts
+    setAuthState(getAuthState())
+  }, [])
+
+  const handleLogout = () => {
+    logout()
+    setAuthState({ isAuthenticated: false, token: null, userInfo: null })
+    router.push('/signin')
+  }
+
+  if (!authState.isAuthenticated || !authState.userInfo) {
+    return (
+      <div className="ml-6 mt-2 pt-2 border-t border-sidebar-border/50">
+        <Link
+          href="/signin"
+          className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2"
+        >
+          <div className="h-4 w-4 flex-shrink-0 rounded-full bg-gray-300" />
+          <span className="text-sm text-sidebar-foreground">Sign In</span>
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <div className="ml-6 mt-2 pt-2 border-t border-sidebar-border/50">
+      <div className="px-2 mb-2">
+        <div className="text-xs text-muted-foreground mb-1">Signed in as</div>
+        <div className="text-sm text-sidebar-foreground font-medium">{authState.userInfo.name}</div>
+        <div className="text-xs text-muted-foreground">{authState.userInfo.email}</div>
+      </div>
+      <button
+        onClick={handleLogout}
+        className="w-full flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2 text-left"
+      >
+        <div className="h-4 w-4 flex-shrink-0">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </div>
+        <span className="text-sm text-sidebar-foreground">Logout</span>
+      </button>
+    </div>
+  )
+}
 
 export function Navigation() {
   const [expandedSections, setExpandedSections] = useState<string[]>(["parent", "enterprise"])
@@ -55,12 +108,8 @@ export function Navigation() {
     }
 
     setIsSearching(true)
-    const results = mockChatHistory.filter(
-      (chat) =>
-        chat.title.toLowerCase().includes(query.toLowerCase()) ||
-        chat.content.toLowerCase().includes(query.toLowerCase()),
-    )
-    setSearchResults(results)
+    // TODO: Implement search with chat history service
+    setSearchResults([])
   }
 
   const clearSearch = () => {
@@ -317,15 +366,25 @@ export function Navigation() {
             )}
 
             {/* Recent Chats */}
-            <Link
-              href="/recent"
-              className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2 mb-2"
-            >
-              <Clock className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
-              {shouldExpand && <span className="text-sm text-sidebar-foreground">Recent Chats</span>}
-            </Link>
+            {shouldExpand && (
+              <RecentChatsSidebar 
+                className="border-b border-sidebar-border/50 mb-2 pb-2"
+                onChatSelect={(sessionId) => {
+                  // Navigate to search with session context
+                  window.location.href = `/search?session_id=${sessionId}`;
+                }}
+              />
+            )}
 
-            {shouldExpand && <div className="border-t border-sidebar-border/50 my-2" />}
+            {!shouldExpand && (
+              <Link
+                href="/search"
+                className="flex items-center rounded-lg hover:bg-sidebar-accent/10 transition-colors h-8 space-x-2 px-2 mb-2"
+                title="Recent Chats"
+              >
+                <Clock className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
+              </Link>
+            )}
 
             {/* Parent Apps Section */}
             <div>
@@ -716,6 +775,9 @@ export function Navigation() {
                   <Settings className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
                   <span className="text-sm text-sidebar-foreground">Settings & Help</span>
                 </Link>
+
+                {/* User Profile & Logout Section */}
+                <UserProfileSection />
 
                 <div className="ml-6 mt-2 pt-2 border-t border-sidebar-border/50">
                   <div className="px-2 text-[10px] text-muted-foreground">© 2025 Caregene AI</div>
