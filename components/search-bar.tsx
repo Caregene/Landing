@@ -2,33 +2,81 @@
 
 import type React from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Mic, Send } from "lucide-react"
 
-export function SearchBar() {
+interface SearchBarProps {
+  onMessage?: (message: string) => void
+}
+
+export function SearchBar({ onMessage }: SearchBarProps = {}) {
   const [searchQuery, setSearchQuery] = useState("")
+  const [isRequestInProgress, setIsRequestInProgress] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const pathname = usePathname()
 
   const isSearchPage = pathname === "/search"
 
+  // Check if there's a request in progress
+  useEffect(() => {
+    const checkRequestStatus = () => {
+      const isLoading = localStorage.getItem('chatLoading') === 'true'
+      setIsRequestInProgress(isLoading)
+    }
+
+    checkRequestStatus()
+    const interval = setInterval(checkRequestStatus, 500)
+    
+    return () => clearInterval(interval)
+  }, [])
+
   const handleFileUpload = () => {
     fileInputRef.current?.click()
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (searchQuery.trim()) {
+    if (!searchQuery.trim()) return
+
+    // Prevent multiple requests while one is in progress
+    if (isRequestInProgress) {
+      return
+    }
+
+    // Check if user is authenticated
+    const authToken = localStorage.getItem('authToken')
+    if (!authToken) {
+      alert('Please log in to use the chat feature')
+      router.push('/signin')
+      return
+    }
+
+    // If already on search page and we have a message handler, use it
+    if (isSearchPage && onMessage) {
+      onMessage(searchQuery.trim())
+      setSearchQuery('') // Clear the input
+    } else if (isSearchPage) {
+      // Fallback: this shouldn't be used if onMessage is provided, but keeping for safety
+      console.warn('SearchBar fallback used - this may create duplicate sessions')
+      const newUrl = `/search?q=${encodeURIComponent(searchQuery.trim())}`
+      router.push(newUrl)
+      setSearchQuery('') // Clear the input
+    } else {
+      // Simply redirect to search page with the query
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
     }
   }
 
   const handleSuggestionClick = (suggestion: string) => {
-    setSearchQuery(suggestion)
-    router.push(`/search?q=${encodeURIComponent(suggestion)}`)
+    if (isSearchPage && onMessage) {
+      onMessage(suggestion)
+    } else {
+      setSearchQuery(suggestion)
+      router.push(`/search?q=${encodeURIComponent(suggestion)}`)
+    }
   }
 
   return (
@@ -73,13 +121,13 @@ export function SearchBar() {
       )}
 
       <form onSubmit={handleSubmit} className="relative">
-        <div className="flex items-center bg-white border border-gray-200 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div className="flex items-center bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={handleFileUpload}
-            className="ml-3 p-2 rounded-full hover:bg-gray-50 text-gray-600"
+            className="ml-3 p-2 rounded-lg hover:bg-gray-50 text-gray-600"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -88,17 +136,22 @@ export function SearchBar() {
 
           <Input
             type="text"
-            placeholder="Ask CareGene"
+            placeholder={isRequestInProgress ? "Please wait for response..." : "Ask me anything about your health..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 border-0 bg-transparent px-4 py-3 text-base leading-relaxed focus:ring-0 focus:outline-none placeholder:text-gray-500 min-h-[48px]"
+            disabled={isRequestInProgress}
+            className={`flex-1 border-0 bg-transparent px-4 py-3 text-base leading-relaxed focus:ring-0 focus:outline-none min-h-[48px] transition-all duration-200 ${
+              isRequestInProgress 
+                ? 'placeholder:text-gray-400 text-gray-500 cursor-not-allowed' 
+                : 'placeholder:text-gray-500'
+            }`}
           />
 
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="mr-3 p-2 rounded-full hover:bg-gray-50 text-gray-600"
+            className="mr-3 p-2 rounded-lg hover:bg-gray-50 text-gray-600"
           >
             <Mic className="h-4 w-4" />
           </Button>
@@ -108,9 +161,18 @@ export function SearchBar() {
               type="submit"
               variant="ghost"
               size="sm"
-              className="mr-3 p-2 rounded-full hover:bg-gray-50 text-gray-600"
+              disabled={isRequestInProgress}
+              className={`mr-3 p-2 rounded-lg transition-all duration-200 ${
+                isRequestInProgress 
+                  ? 'opacity-50 cursor-not-allowed text-gray-400' 
+                  : 'hover:bg-gray-50 text-gray-600'
+              }`}
             >
-              <Send className="h-4 w-4" />
+              {isRequestInProgress ? (
+                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           )}
         </div>

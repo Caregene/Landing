@@ -1,16 +1,31 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { PageWrapper } from "@/components/page-wrapper"
 import { Stethoscope, FileText, BookOpen, Users, FlaskConical } from "lucide-react"
 import Link from "next/link"
 
 export default function HomePage() {
   const [query, setQuery] = useState("")
+  const router = useRouter()
 
-  const handleSubmit = (e:any) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Search query:", query)
+    if (query.trim()) {
+      // Check if user is authenticated before redirecting to search
+      const authToken = localStorage.getItem('authToken')
+      if (!authToken) {
+        // Store the intended query to use after login
+        localStorage.setItem('pendingQuery', query.trim())
+        alert('Please log in to use the AI chat feature')
+        router.push('/signin')
+        return
+      }
+      
+      // User is authenticated, proceed to search page
+      router.push(`/search?q=${encodeURIComponent(query.trim())}`)
+    }
   }
 
   const parentTools = [

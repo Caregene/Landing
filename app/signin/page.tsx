@@ -19,20 +19,59 @@ export default function SignInPage() {
   const [name, setName] = useState("")
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
     if (isSignUp) {
-      console.log("Sign up attempt:", { name, email, password })
-    } else {
-      console.log("Sign in attempt:", { email, password })
+      // For now, sign up is not implemented in the test system
+      alert("Sign up is not available in test mode. Please use admin@admin.com with password Admin@PTS")
+      return
     }
 
-    // In a real app, this would happen after successful API response
-    const lastChatId = localStorage.getItem("lastChatId") || "new"
-    if (lastChatId === "new") {
-      router.push("/search")
-    } else {
-      router.push(`/search?chat=${lastChatId}`)
+    try {
+      // Call our test authentication API
+      const response = await fetch('http://localhost:8000/api/v1/test/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        
+        // Store the token in localStorage
+        localStorage.setItem('authToken', data.access_token)
+        localStorage.setItem('userInfo', JSON.stringify(data.user_info))
+        
+        console.log("Login successful:", data)
+        console.log("Token stored:", data.access_token)
+        console.log("Verifying token in localStorage:", localStorage.getItem('authToken'))
+        
+        // Redirect to search page with pending query if available
+        const pendingQuery = localStorage.getItem('pendingQuery')
+        if (pendingQuery) {
+          localStorage.removeItem('pendingQuery')
+          router.push(`/search?q=${encodeURIComponent(pendingQuery)}`)
+        } else {
+          const lastChatId = localStorage.getItem("lastChatId") || "new"
+          if (lastChatId === "new") {
+            router.push("/search")
+          } else {
+            router.push(`/search?chat=${lastChatId}`)
+          }
+        }
+      } else {
+        const errorData = await response.json()
+        alert(`Login failed: ${errorData.detail || 'Invalid credentials'}`)
+      }
+    } catch (error) {
+      console.error("Login error:", error)
+      alert("Login failed: Network error")
     }
   }
 
@@ -72,6 +111,12 @@ export default function SignInPage() {
                 ? "Join Caregene to access personalized healthcare guidance"
                 : "Sign in to access your personalized healthcare guidance"}
             </p>
+            {!isSignUp && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800 font-medium">Contact Admin For Test Credentials</p>
+
+              </div>
+            )}
           </div>
 
           {/* Toggle Buttons */}

@@ -56,7 +56,7 @@ const getImageUrl = (imagePath?: string): string => {
     if (!imagePath || typeof imagePath !== "string") return "/placeholder.jpg"
     const lower = imagePath.toLowerCase()
     if (lower.startsWith("http://") || lower.startsWith("https://") || lower.startsWith("data:" ) || lower.startsWith("blob:")) return imagePath
-    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5000"
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:8000"
     return `${BACKEND_URL}${imagePath}`
 }
 

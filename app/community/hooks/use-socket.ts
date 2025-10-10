@@ -44,8 +44,8 @@ export interface SocketEvents {
   'notification:new': (notification: any) => void;
 }
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
-const defaultWsBase = apiUrl.replace(/\/api\/?$/, '') || 'http://localhost:5000'
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+const defaultWsBase = apiUrl.replace(/\/api\/?$/, '') || 'http://localhost:8000'
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || defaultWsBase
 
 export function useSocket() {
