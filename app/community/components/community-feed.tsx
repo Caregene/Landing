@@ -21,7 +21,7 @@ import { logUserActivity } from "../lib/utils"
 const getImageUrl = (imagePath: string) => {
   if (!imagePath || typeof imagePath !== 'string') return '/placeholder.jpg'
   if (imagePath.startsWith('http')) return imagePath
-  const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'
+  const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000'
   const fullUrl = `${BACKEND_URL}${imagePath}`
   return `/api/image-proxy?url=${encodeURIComponent(fullUrl)}`
 }

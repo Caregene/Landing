@@ -21,12 +21,14 @@ interface RecentChatsSidebarProps {
   className?: string
   onChatSelect?: (sessionId: string) => void
   currentSessionId?: string
+  refreshTrigger?: number // Add this to trigger refresh from parent
 }
 
 export function RecentChatsSidebar({ 
   className,
   onChatSelect,
-  currentSessionId 
+  currentSessionId,
+  refreshTrigger 
 }: RecentChatsSidebarProps) {
   const [recentChats, setRecentChats] = useState<ChatSession[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -36,6 +38,13 @@ export function RecentChatsSidebar({
   useEffect(() => {
     loadRecentChats()
   }, [])
+
+  // Reload when refreshTrigger changes
+  useEffect(() => {
+    if (refreshTrigger) {
+      loadRecentChats()
+    }
+  }, [refreshTrigger])
 
   const loadRecentChats = async () => {
     try {
@@ -65,8 +74,15 @@ export function RecentChatsSidebar({
     try {
       await chatHistoryService.deleteSession(sessionId)
       setRecentChats(prev => prev.filter(chat => chat.id !== sessionId))
+      
+      // If we're currently viewing the deleted session, redirect to search
+      if (currentSessionId === sessionId) {
+        router.push('/search')
+      }
     } catch (err) {
       console.error('Error deleting chat:', err)
+      // Reload the recent chats in case of error to ensure consistency
+      loadRecentChats()
     }
   }
 
@@ -75,8 +91,15 @@ export function RecentChatsSidebar({
     try {
       await chatHistoryService.archiveSession(sessionId)
       setRecentChats(prev => prev.filter(chat => chat.id !== sessionId))
+      
+      // If we're currently viewing the archived session, redirect to search
+      if (currentSessionId === sessionId) {
+        router.push('/search')
+      }
     } catch (err) {
       console.error('Error archiving chat:', err)
+      // Reload the recent chats in case of error to ensure consistency  
+      loadRecentChats()
     }
   }
 
@@ -186,10 +209,10 @@ export function RecentChatsSidebar({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 shrink-0"
+                    className="opacity-60 group-hover:opacity-100 hover:bg-gray-200 h-7 w-7 p-0 shrink-0 transition-opacity"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <MoreHorizontal className="w-3 h-3" />
+                    <MoreHorizontal className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">

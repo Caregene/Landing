@@ -35,7 +35,7 @@ const getImageUrl = (imagePath: string) => {
     const protocol = typeof window !== 'undefined' ? window.location.protocol : 'https:'
     return `${protocol}${src}`
   }
-  const BACKEND_ORIGIN = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'
+  const BACKEND_ORIGIN = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000'
   const needsSlash = src.startsWith('/') ? '' : '/'
   return `${BACKEND_ORIGIN}${needsSlash}${src}`
 }

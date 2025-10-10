@@ -59,8 +59,9 @@ export function SearchBar({ onMessage }: SearchBarProps = {}) {
       onMessage(searchQuery.trim())
       setSearchQuery('') // Clear the input
     } else if (isSearchPage) {
-      // Fallback: update URL and let the page handle the new query
-      const newUrl = `/search?q=${encodeURIComponent(searchQuery.trim())}&t=${Date.now()}`
+      // Fallback: this shouldn't be used if onMessage is provided, but keeping for safety
+      console.warn('SearchBar fallback used - this may create duplicate sessions')
+      const newUrl = `/search?q=${encodeURIComponent(searchQuery.trim())}`
       router.push(newUrl)
       setSearchQuery('') // Clear the input
     } else {

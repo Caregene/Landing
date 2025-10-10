@@ -42,7 +42,7 @@ interface ChatSessionWithMessages extends ChatSession {
 class ChatHistoryService {
   private baseUrl: string;
 
-  constructor(baseUrl: string = '/api/v1/chat') {
+  constructor(baseUrl: string = 'http://localhost:8000/api/v1/chat') {
     this.baseUrl = baseUrl;
   }
 
@@ -51,22 +51,43 @@ class ChatHistoryService {
     options: RequestInit = {}
   ): Promise<T> {
     const token = localStorage.getItem('authToken');
+    const fullUrl = `${this.baseUrl}${endpoint}`;
     
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
-        ...options.headers,
-      },
-    });
+    console.log('Making request to:', fullUrl);
+    console.log('Auth token present:', !!token);
+    
+    try {
+      const response = await fetch(fullUrl, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+          ...options.headers,
+        },
+      });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Request failed' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('Error response text:', errorText);
+        
+        let error;
+        try {
+          error = JSON.parse(errorText);
+        } catch {
+          error = { detail: errorText || 'Request failed' };
+        }
+        
+        throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return response.json();
+    } catch (fetchError) {
+      console.error('Fetch error:', fetchError);
+      throw fetchError;
     }
-
-    return response.json();
   }
 
   /**

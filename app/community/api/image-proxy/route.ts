@@ -11,8 +11,8 @@ export async function GET(request: NextRequest) {
 
     // Validate that the URL is from our backend
     const allowedOrigins = [
-      'http://localhost:5000',
-      'http://127.0.0.1:5000',
+      'http://localhost:8000',
+      'http://127.0.0.1:8000',
       process.env.NEXT_PUBLIC_API_URL?.replace('/api', ''),
     ].filter(Boolean)
 

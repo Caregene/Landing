@@ -27,19 +27,76 @@ export default function SearchPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null)
 
+  // Debug logging
+  console.log('Search page render - query:', query, 'sessionId:', sessionId)
+  
+  // Reset query processing flag when we navigate to a different session or clear session
+  useEffect(() => {
+    if (!query && !sessionId) {
+      hasProcessedQuery.current = false
+    }
+  }, [query, sessionId])
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
+  const inputSectionRef = useRef<HTMLDivElement>(null)
+  const hasProcessedQuery = useRef(false)
+
+  // Initial scroll on component mount
+  useEffect(() => {
+    // Scroll to bottom when the component first mounts
+    const initialScroll = () => {
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
+
+    // Multiple attempts to ensure scroll happens
+    setTimeout(initialScroll, 100)
+    setTimeout(initialScroll, 300)
+    setTimeout(initialScroll, 600)
+
+    // Also scroll when window gains focus
+    const handleFocus = () => {
+      setTimeout(initialScroll, 100)
+    }
+
+    window.addEventListener('focus', handleFocus)
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [])
 
   // Load session if sessionId is provided
   useEffect(() => {
     const loadSession = async () => {
       if (sessionId && isAuthenticated) {
-        try {
-          const sessionData = await chatHistoryService.getSession(sessionId)
-          setCurrentSession(sessionData)
-          setMessages(sessionData.messages)
-        } catch (error) {
-          console.error('Error loading session:', error)
+        // Only load if we don't already have this session
+        if (currentSession?.id !== sessionId) {
+          try {
+            console.log('Loading session from URL:', sessionId)
+            console.log('Current session before loading:', currentSession?.id)
+            const sessionData = await chatHistoryService.getSession(sessionId)
+            setCurrentSession(sessionData)
+            setMessages(sessionData.messages)
+            console.log('Session loaded successfully:', sessionData.id, 'with', sessionData.messages.length, 'messages')
+          } catch (error) {
+            console.error('Error loading session:', error)
+            
+            // Check for authentication errors
+            if (error instanceof Error && (
+              error.message.includes('401') || 
+              error.message.includes('Invalid or expired token') ||
+              error.message.toLowerCase().includes('unauthorized')
+            )) {
+              localStorage.removeItem('authToken')
+              localStorage.removeItem('userInfo')
+              router.push('/signin')
+              return
+            }
+          }
         }
       }
     }
@@ -66,9 +123,17 @@ export default function SearchPage() {
       console.log('Auth token found, setting authenticated state')
       setIsAuthenticated(true)
 
-      // If there's a query and no existing session, start new conversation
-      if (query.trim() && !sessionId) {
+      // Only process URL query once when we first arrive with a query
+      // Don't process if we already have a session or if sessionId is in URL or if already processed
+      if (query.trim() && !sessionId && !currentSession && !hasProcessedQuery.current) {
+        console.log('Processing URL query (first time):', query.trim())
+        hasProcessedQuery.current = true
         handleUserMessage(query.trim())
+        
+        // Clear the query parameter after processing to prevent reprocessing
+        const newUrl = new URL(window.location.href)
+        newUrl.searchParams.delete('q')
+        window.history.replaceState({}, '', newUrl.toString())
       }
     }
 
@@ -76,7 +141,49 @@ export default function SearchPage() {
     setTimeout(checkAuth, 500)
   }, [query, router, sessionId])
 
+  // Auto-scroll to bottom when page loads
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Initial scroll when page loads and user is authenticated
+      setTimeout(() => scrollToBottom(), 800)
+      // Additional scroll to ensure input is visible
+      setTimeout(() => {
+        const searchInput = document.querySelector('input[placeholder*="Ask"]') as HTMLElement
+        if (searchInput) {
+          searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 1200)
+    }
+  }, [isAuthenticated])
+
+  // Auto-scroll when messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => scrollToBottom(), 200)
+    } else {
+      // If no messages, ensure input area is visible
+      setTimeout(() => {
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: 'smooth'
+        })
+      }, 500)
+    }
+  }, [messages])
+
   const handleUserMessage = async (userQuery: string) => {
+    // Add temporary user message immediately to UI for responsiveness
+    const tempUserMessage: Message = {
+      id: `temp-user-${Date.now()}`,
+      content: userQuery,
+      role: 'user',
+      timestamp: new Date().toISOString(),
+      metadata: { isTemporary: true }
+    }
+    
+    // Show user message immediately
+    setMessages(prev => [...prev, tempUserMessage])
+    
     setIsLoading(true)
     localStorage.setItem('chatLoading', 'true') // Set loading flag for SearchBar
     
@@ -86,46 +193,72 @@ export default function SearchPage() {
     try {
       let response: ChatResponse
       
-      if (currentSession) {
+      console.log('Current session state:', currentSession?.id)
+      console.log('Session ID from URL:', sessionId)
+      console.log('Messages count before sending:', messages.length)
+      
+      // Use currentSession state as primary, fallback to sessionId from URL
+      const activeSessionId = currentSession?.id || sessionId
+      
+      if (activeSessionId && currentSession) {
         // Continue existing session
-        response = await chatHistoryService.sendMessage(currentSession.id, userQuery)
+        console.log('Continuing existing session:', activeSessionId)
+        response = await chatHistoryService.sendMessage(activeSessionId, userQuery)
       } else {
         // Start new session
+        console.log('Starting new session because no active session found')
         response = await chatHistoryService.startChat(userQuery)
-        setCurrentSession(response.session)
+        console.log('New session created:', response.session.id)
+        
+        // Update URL with session ID to maintain session continuity
+        const newUrl = new URL(window.location.href)
+        newUrl.searchParams.set('session_id', response.session.id)
+        newUrl.searchParams.delete('q') // Remove query param as it's been processed
+        window.history.replaceState({}, '', newUrl.toString())
       }
       
-      // Update messages with both user and AI messages
-      const updatedMessages = [...messages]
+      // Handle the response properly to avoid duplicates
+      console.log('Response received:', response)
+      console.log('Current messages count:', messages.length)
       
-      // Find user message by content (since we don't have the user message in response for continuing sessions)
-      const existingUserMessage = updatedMessages.find(
-        msg => msg.content === userQuery && msg.role === 'user' && 
-               Math.abs(new Date(msg.timestamp).getTime() - Date.now()) < 10000 // within 10 seconds
-      )
+      // Always update the session state with the response session
+      setCurrentSession(response.session)
+      console.log('Session state updated to:', response.session.id)
       
-      if (!existingUserMessage) {
-        // Create user message if not already added
-        const userMessage: Message = {
-          id: `user-${Date.now()}`,
-          content: userQuery,
-          role: 'user',
-          timestamp: new Date().toISOString()
-        }
-        updatedMessages.push(userMessage)
+      // Remove the temporary message and reload complete session to get accurate state
+      try {
+        const sessionData = await chatHistoryService.getSession(response.session.id)
+        setMessages(sessionData.messages)
+        setCurrentSession(sessionData) // Make sure we update the current session state
+        console.log('Session reloaded with', sessionData.messages.length, 'messages')
+        console.log('Current session updated to:', sessionData.id)
+      } catch (sessionError) {
+        console.error('Error reloading session:', sessionError)
+        // Fallback: remove temp message and add real user + AI messages
+        setMessages(prev => {
+          const withoutTemp = prev.filter(msg => !msg.metadata?.isTemporary)
+          const realUserMessage: Message = {
+            id: `user-${Date.now()}`,
+            content: userQuery,
+            role: 'user',
+            timestamp: new Date().toISOString()
+          }
+          return [...withoutTemp, realUserMessage, response.message]
+        })
       }
       
-      // Add AI response
-      updatedMessages.push(response.message)
-      setMessages(updatedMessages)
-      
-      // Scroll to bottom after adding AI response
-      setTimeout(() => scrollToBottom(), 150)
+      // Scroll to bottom after adding messages
+      setTimeout(() => scrollToBottom(), 300)
       
     } catch (error) {
       console.error('Chat error:', error)
       
-      if (error instanceof Error && error.message.includes('401')) {
+      // Check for authentication errors (both HTTP 401 and token error messages)
+      if (error instanceof Error && (
+        error.message.includes('401') || 
+        error.message.includes('Invalid or expired token') ||
+        error.message.toLowerCase().includes('unauthorized')
+      )) {
         localStorage.removeItem('authToken')
         localStorage.removeItem('userInfo')
         router.push('/signin')
@@ -148,17 +281,61 @@ export default function SearchPage() {
     } finally {
       setIsLoading(false)
       localStorage.removeItem('chatLoading') // Clear loading flag
+      // Ensure scroll to bottom after response is fully processed
+      setTimeout(() => scrollToBottom(), 500)
     }
   }
 
   const scrollToBottom = () => {
-    // Try scrolling to the messages end ref first
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' })
-    } else if (chatContainerRef.current) {
-      // Fallback: scroll the container to bottom
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
-    }
+    // Use requestAnimationFrame to ensure DOM has been updated
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        // First priority: scroll to the input section ref to ensure it's fully visible
+        if (inputSectionRef.current) {
+          inputSectionRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'end',
+            inline: 'nearest'
+          })
+        } else {
+          // Fallback: find input element and scroll to it
+          const inputElement = document.querySelector('input[type="text"]') || document.querySelector('textarea')
+          if (inputElement) {
+            inputElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center',
+              inline: 'nearest'
+            })
+            // Add extra scroll to ensure input area is comfortably visible
+            setTimeout(() => {
+              window.scrollBy({
+                top: 80,
+                behavior: 'smooth'
+              })
+            }, 200)
+          } else if (messagesEndRef.current) {
+            // Scroll to messages end with extra space for input area
+            messagesEndRef.current.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'end',
+              inline: 'nearest'
+            })
+            setTimeout(() => {
+              window.scrollBy({
+                top: 150,
+                behavior: 'smooth'
+              })
+            }, 200)
+          } else {
+            // Last resort: scroll to very bottom
+            window.scrollTo({
+              top: document.body.scrollHeight,
+              behavior: 'smooth'
+            })
+          }
+        }
+      }, 100)
+    })
   }
 
   const clearChatHistory = () => {
@@ -177,15 +354,21 @@ export default function SearchPage() {
 
 
 
-  // Auto-scroll when new messages are added
+    // Auto-scroll when new messages are added or loading state changes
   useEffect(() => {
-    // Small delay to ensure DOM is updated
-    const timer = setTimeout(() => {
-      scrollToBottom()
-    }, 100)
-    
-    return () => clearTimeout(timer)
-  }, [messages, isLoading])
+    if (messages.length > 0) {
+      // Use a longer timeout to ensure content is fully rendered
+      setTimeout(() => scrollToBottom(), 300)
+    }
+  }, [messages])
+
+  // Also scroll when loading completes (AI response is fully rendered)
+  useEffect(() => {
+    if (!isLoading && messages.length > 0) {
+      // Longer delay to ensure AI response is fully rendered before scrolling
+      setTimeout(() => scrollToBottom(), 600)
+    }
+  }, [isLoading, messages.length])
 
   if (!isAuthenticated) {
     return (
@@ -340,15 +523,15 @@ export default function SearchPage() {
                           : 'flex justify-start animate-fadeIn'
                       }
                     >
-                      <div className="max-w-[85%]">
+                      <div className={message.role === 'user' ? 'max-w-[95%]' : 'max-w-[85%]'}>
                         {/* Message Bubble */}
                         <div className={
                           message.role === 'user'
-                            ? 'relative px-5 py-4 rounded-lg shadow-sm border-0 transition-all duration-200 bg-gray-100 text-gray-800 max-w-[90%] ml-auto'
+                            ? 'relative px-5 py-4 rounded-lg shadow-sm border-0 transition-all duration-200 bg-gray-100 text-gray-800 ml-auto'
                             : 'relative px-5 py-4 rounded-lg shadow-sm border-0 transition-all duration-200 bg-gray-800 text-white'
                         }>
                           {message.role === 'user' ? (
-                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap break-words hyphens-none" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>{message.content}</p>
                           ) : (
                             <div className="text-sm ai-message-content">
                               <ReactMarkdown>
@@ -386,7 +569,7 @@ export default function SearchPage() {
           </div>
 
         {/* Input Section */}
-        <div className="bg-background border-t border-border/50">
+        <div ref={inputSectionRef} className="bg-background border-t border-border/50">
           <div className="p-3 sm:p-4 md:p-6 lg:p-8 xl:p-10">
             <div className="max-w-full sm:max-w-4xl mx-auto">
               <SearchBar onMessage={handleUserMessage} />
