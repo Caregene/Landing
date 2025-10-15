@@ -1,7 +1,7 @@
 "use client"
 
 
-import { DMInbox } from "../components/dm-conversation"
+//import { DMInbox } from "../components/dm-conversation"
 import { NotificationProvider } from "../contexts/notification-context"
 
 
